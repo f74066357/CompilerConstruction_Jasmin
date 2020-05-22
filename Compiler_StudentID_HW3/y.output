@@ -122,8 +122,13 @@ Grammar
 
    81 PostStmt: SimpleStmt
 
-   82 PrintStmt: PRINT LPAREN Expression RPAREN
-   83          | PRINTLN LPAREN Expression RPAREN
+   82 $@1: %empty
+
+   83 PrintStmt: PRINT $@1 LPAREN Expression RPAREN
+
+   84 $@2: %empty
+
+   85 PrintStmt: PRINTLN $@2 LPAREN Expression RPAREN
 
 
 Terminals, with rules where they appear
@@ -139,8 +144,8 @@ MUL_ASSIGN (263) 20
 QUO_ASSIGN (264) 21
 REM_ASSIGN (265) 22
 NOT (266) 51
-LPAREN (267) 58 65 82 83
-RPAREN (268) 58 65 82 83
+LPAREN (267) 58 65 83 85
+RPAREN (268) 58 65 83 85
 LBRACK (269) 30 64
 RBRACK (270) 30 64
 LBRACE (271) 69
@@ -148,8 +153,8 @@ RBRACE (272) 70
 COMMA (273)
 SEMICOLON (274) 79
 NEWLINE (275) 4 5 6 7 8 9 10
-PRINT (276) 82
-PRINTLN (277) 83
+PRINT (276) 83
+PRINTLN (277) 85
 IF (278) 74
 ELSE (279) 72 73
 FOR (280) 78
@@ -206,7 +211,7 @@ TypeName (60)
 ArrayType (61)
     on left: 30, on right: 25
 Expression (62)
-    on left: 31 32, on right: 12 16 23 30 31 58 64 65 66 67 75 82 83
+    on left: 31 32, on right: 12 16 23 30 31 58 64 65 66 67 75 83 85
 Expression1 (63)
     on left: 33 34, on right: 31 32 33
 Expression2 (64)
@@ -252,7 +257,11 @@ InitStmt (83)
 PostStmt (84)
     on left: 81, on right: 79
 PrintStmt (85)
-    on left: 82 83, on right: 9
+    on left: 83 85, on right: 9
+$@1 (86)
+    on left: 82, on right: 83
+$@2 (87)
+    on left: 84, on right: 85
 
 
 State 0
@@ -432,16 +441,20 @@ State 5
 
 State 6
 
-   82 PrintStmt: PRINT . LPAREN Expression RPAREN
+   83 PrintStmt: PRINT . $@1 LPAREN Expression RPAREN
 
-    LPAREN  shift, and go to state 55
+    $default  reduce using rule 82 ($@1)
+
+    $@1  go to state 55
 
 
 State 7
 
-   83 PrintStmt: PRINTLN . LPAREN Expression RPAREN
+   85 PrintStmt: PRINTLN . $@2 LPAREN Expression RPAREN
 
-    LPAREN  shift, and go to state 56
+    $default  reduce using rule 84 ($@2)
+
+    $@2  go to state 56
 
 
 State 8
@@ -1046,74 +1059,16 @@ State 54
 
 State 55
 
-   82 PrintStmt: PRINT LPAREN . Expression RPAREN
+   83 PrintStmt: PRINT $@1 . LPAREN Expression RPAREN
 
-    NOT         shift, and go to state 1
-    LPAREN      shift, and go to state 2
-    LBRACK      shift, and go to state 3
-    INT         shift, and go to state 11
-    FLOAT       shift, and go to state 12
-    BOOL        shift, and go to state 13
-    STRING      shift, and go to state 14
-    INT_LIT     shift, and go to state 15
-    FLOAT_LIT   shift, and go to state 16
-    STRING_LIT  shift, and go to state 17
-    ID          shift, and go to state 18
-    TRUE        shift, and go to state 19
-    FALSE       shift, and go to state 20
-    ADD         shift, and go to state 21
-    SUB         shift, and go to state 22
-
-    Type            go to state 30
-    TypeName        go to state 31
-    ArrayType       go to state 32
-    Expression      go to state 102
-    Expression1     go to state 34
-    Expression2     go to state 35
-    Expression3     go to state 36
-    Expression4     go to state 37
-    UnaryExpr       go to state 38
-    PrimaryExpr     go to state 39
-    Operand         go to state 40
-    Literal         go to state 41
-    IndexExpr       go to state 42
-    ConversionExpr  go to state 43
+    LPAREN  shift, and go to state 102
 
 
 State 56
 
-   83 PrintStmt: PRINTLN LPAREN . Expression RPAREN
+   85 PrintStmt: PRINTLN $@2 . LPAREN Expression RPAREN
 
-    NOT         shift, and go to state 1
-    LPAREN      shift, and go to state 2
-    LBRACK      shift, and go to state 3
-    INT         shift, and go to state 11
-    FLOAT       shift, and go to state 12
-    BOOL        shift, and go to state 13
-    STRING      shift, and go to state 14
-    INT_LIT     shift, and go to state 15
-    FLOAT_LIT   shift, and go to state 16
-    STRING_LIT  shift, and go to state 17
-    ID          shift, and go to state 18
-    TRUE        shift, and go to state 19
-    FALSE       shift, and go to state 20
-    ADD         shift, and go to state 21
-    SUB         shift, and go to state 22
-
-    Type            go to state 30
-    TypeName        go to state 31
-    ArrayType       go to state 32
-    Expression      go to state 103
-    Expression1     go to state 34
-    Expression2     go to state 35
-    Expression3     go to state 36
-    Expression4     go to state 37
-    UnaryExpr       go to state 38
-    PrimaryExpr     go to state 39
-    Operand         go to state 40
-    Literal         go to state 41
-    IndexExpr       go to state 42
-    ConversionExpr  go to state 43
+    LPAREN  shift, and go to state 103
 
 
 State 57
@@ -1954,20 +1909,74 @@ State 101
 
 State 102
 
-   31 Expression: Expression . LOR Expression1
-   82 PrintStmt: PRINT LPAREN Expression . RPAREN
+   83 PrintStmt: PRINT $@1 LPAREN . Expression RPAREN
 
-    RPAREN  shift, and go to state 128
-    LOR     shift, and go to state 73
+    NOT         shift, and go to state 1
+    LPAREN      shift, and go to state 2
+    LBRACK      shift, and go to state 3
+    INT         shift, and go to state 11
+    FLOAT       shift, and go to state 12
+    BOOL        shift, and go to state 13
+    STRING      shift, and go to state 14
+    INT_LIT     shift, and go to state 15
+    FLOAT_LIT   shift, and go to state 16
+    STRING_LIT  shift, and go to state 17
+    ID          shift, and go to state 18
+    TRUE        shift, and go to state 19
+    FALSE       shift, and go to state 20
+    ADD         shift, and go to state 21
+    SUB         shift, and go to state 22
+
+    Type            go to state 30
+    TypeName        go to state 31
+    ArrayType       go to state 32
+    Expression      go to state 128
+    Expression1     go to state 34
+    Expression2     go to state 35
+    Expression3     go to state 36
+    Expression4     go to state 37
+    UnaryExpr       go to state 38
+    PrimaryExpr     go to state 39
+    Operand         go to state 40
+    Literal         go to state 41
+    IndexExpr       go to state 42
+    ConversionExpr  go to state 43
 
 
 State 103
 
-   31 Expression: Expression . LOR Expression1
-   83 PrintStmt: PRINTLN LPAREN Expression . RPAREN
+   85 PrintStmt: PRINTLN $@2 LPAREN . Expression RPAREN
 
-    RPAREN  shift, and go to state 129
-    LOR     shift, and go to state 73
+    NOT         shift, and go to state 1
+    LPAREN      shift, and go to state 2
+    LBRACK      shift, and go to state 3
+    INT         shift, and go to state 11
+    FLOAT       shift, and go to state 12
+    BOOL        shift, and go to state 13
+    STRING      shift, and go to state 14
+    INT_LIT     shift, and go to state 15
+    FLOAT_LIT   shift, and go to state 16
+    STRING_LIT  shift, and go to state 17
+    ID          shift, and go to state 18
+    TRUE        shift, and go to state 19
+    FALSE       shift, and go to state 20
+    ADD         shift, and go to state 21
+    SUB         shift, and go to state 22
+
+    Type            go to state 30
+    TypeName        go to state 31
+    ArrayType       go to state 32
+    Expression      go to state 129
+    Expression1     go to state 34
+    Expression2     go to state 35
+    Expression3     go to state 36
+    Expression4     go to state 37
+    UnaryExpr       go to state 38
+    PrimaryExpr     go to state 39
+    Operand         go to state 40
+    Literal         go to state 41
+    IndexExpr       go to state 42
+    ConversionExpr  go to state 43
 
 
 State 104
@@ -2244,16 +2253,20 @@ State 127
 
 State 128
 
-   82 PrintStmt: PRINT LPAREN Expression RPAREN .
+   31 Expression: Expression . LOR Expression1
+   83 PrintStmt: PRINT $@1 LPAREN Expression . RPAREN
 
-    $default  reduce using rule 82 (PrintStmt)
+    RPAREN  shift, and go to state 135
+    LOR     shift, and go to state 73
 
 
 State 129
 
-   83 PrintStmt: PRINTLN LPAREN Expression RPAREN .
+   31 Expression: Expression . LOR Expression1
+   85 PrintStmt: PRINTLN $@2 LPAREN Expression . RPAREN
 
-    $default  reduce using rule 83 (PrintStmt)
+    RPAREN  shift, and go to state 136
+    LOR     shift, and go to state 73
 
 
 State 130
@@ -2279,7 +2292,7 @@ State 130
     Type            go to state 30
     TypeName        go to state 31
     ArrayType       go to state 32
-    Expression      go to state 135
+    Expression      go to state 137
     Expression1     go to state 34
     Expression2     go to state 35
     Expression3     go to state 36
@@ -2314,9 +2327,9 @@ State 133
     LBRACE  shift, and go to state 4
     IF      shift, and go to state 8
 
-    Block    go to state 136
+    Block    go to state 138
     LBRACE1  go to state 46
-    IfStmt   go to state 137
+    IfStmt   go to state 139
     IFT      go to state 48
 
 
@@ -2324,10 +2337,24 @@ State 134
 
    79 ForClause: InitStmt SEMICOLON Condition . SEMICOLON PostStmt
 
-    SEMICOLON  shift, and go to state 138
+    SEMICOLON  shift, and go to state 140
 
 
 State 135
+
+   83 PrintStmt: PRINT $@1 LPAREN Expression RPAREN .
+
+    $default  reduce using rule 83 (PrintStmt)
+
+
+State 136
+
+   85 PrintStmt: PRINTLN $@2 LPAREN Expression RPAREN .
+
+    $default  reduce using rule 85 (PrintStmt)
+
+
+State 137
 
    12 DeclarationStmt: VAR ID Type ASSIGN Expression .
    31 Expression: Expression . LOR Expression1
@@ -2337,21 +2364,21 @@ State 135
     $default  reduce using rule 12 (DeclarationStmt)
 
 
-State 136
+State 138
 
    73 IfStmt: IFT Condition Block ELSE Block .
 
     $default  reduce using rule 73 (IfStmt)
 
 
-State 137
+State 139
 
    72 IfStmt: IFT Condition Block ELSE IfStmt .
 
     $default  reduce using rule 72 (IfStmt)
 
 
-State 138
+State 140
 
    79 ForClause: InitStmt SEMICOLON Condition SEMICOLON . PostStmt
 
@@ -2371,7 +2398,7 @@ State 138
     ADD         shift, and go to state 21
     SUB         shift, and go to state 22
 
-    SimpleStmt      go to state 139
+    SimpleStmt      go to state 141
     AssignmentStmt  go to state 28
     ExpressionStmt  go to state 29
     Type            go to state 30
@@ -2389,17 +2416,17 @@ State 138
     IndexExpr       go to state 42
     ConversionExpr  go to state 43
     IncDecStmt      go to state 44
-    PostStmt        go to state 140
+    PostStmt        go to state 142
 
 
-State 139
+State 141
 
    81 PostStmt: SimpleStmt .
 
     $default  reduce using rule 81 (PostStmt)
 
 
-State 140
+State 142
 
    79 ForClause: InitStmt SEMICOLON Condition SEMICOLON PostStmt .
 
