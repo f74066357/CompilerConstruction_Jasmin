@@ -18,6 +18,7 @@
     static int f_flag=0;
     static int if_flag=0;
     static int p_flag=0;
+    static int assign_flag=0;
     static tag_count=0;
     typedef struct Symbols {
         int index;
@@ -39,6 +40,8 @@
     static void loadID(int index);
     static void store(int index);
     static void output(char* type,int ln);
+    static void initial(int index);
+    static void print_assign(char * type,char * op);
     /* Global variables */
     bool HAS_ERROR = false;
 %}
@@ -125,7 +128,8 @@ DeclarationStmt
                             dtype="bool";
                             etype="-";
                         }
-                        else{
+                        else{//array
+                                           
                             const char* arrcut = "]";
                             char *substr = NULL;
                             substr =strsep(&sepstr, arrcut);
@@ -136,6 +140,7 @@ DeclarationStmt
                             //printf("type %s\n",sepstr);
                             //printf("type %s\n",arrtype);
                             //printf("hoho\n");
+                            printf("name %s\n",name);
                             if(strcmp(arrtype,"int32")==0){
                                 dtype="array";
                                 etype="int32";
@@ -144,13 +149,23 @@ DeclarationStmt
                                 dtype="array";
                                 etype="float32";
                             }
+
                         }
                         
                         if(lookup_symbol(name,scopecount)==-1){
                             insert_symbol(indexcount,name,dtype,addresscount,yylineno,etype,scopecount);
                             indexcount++;
                             addresscount++;
-                            //print_symbol(scopecount);
+                            int index=lookup_symbol(name,scopecount);
+                            initial(index);
+                            
+                            if(strcmp(symbolTable[index].type,"array")==0){
+                                fprintf(file,"astore %d\n",index);
+                            }
+                            else{
+                                store(index);
+                            }
+                            
                         }
                         else{
                             int i=lookup_symbol(name,scopecount);
@@ -161,6 +176,8 @@ DeclarationStmt
                         
                     }
     | VAR ID Type ASSIGN Expression     {
+                                            //int idaddress=lookup_symbol($2,)
+                                            //loadID(idaddress);
                                             char * buff=strdup($2);
                                             const char* delim = " ";
                                             char *sepstr = buff;
@@ -202,6 +219,7 @@ DeclarationStmt
                                                     dtype="array";
                                                     etype="float32";
                                                 }
+                                                
                                             }
                                             
                                             //if(lookup_symbol(name)==-1){
@@ -210,7 +228,12 @@ DeclarationStmt
                                                 addresscount++;
                                                 //print_symbol(scopecount);
                                             int index=lookup_symbol(name,scopecount);
-                                            store(index);
+                                            if(strcmp(symbolTable[index].type,"array")==0){
+                                                fprintf(file,"astore %d\n",index);
+                                            }
+                                            else{
+                                                store(index);
+                                            }
                                         }
 ;
 
@@ -240,6 +263,14 @@ AssignmentStmt
                                                 strncpy(temp,$3,strlen($3)-1);
                                                 id2=temp;
                                             }
+                                            char *c=strstr(id1, "[");
+                                            if(c != NULL) {
+                                                const char* idcut = "[";
+                                                char *sepstr = id1;
+                                                id1=strsep(&sepstr, idcut);
+                                                //printf("id\: %s\n",id1);
+                                            }
+
                                             //printf("id\: %s %s\n",id1,id2);
                                             if(strcmp(id1,"INT_LIT")==0){
                                                 type1="int32";
@@ -254,7 +285,9 @@ AssignmentStmt
                                             else{
                                                 int i1=lookup_symbol(id1,scopecount);
                                                 if(i1!=-1){
-                                                        type1=symbolTable[i1].type;
+                                                        type1=typecheck(id1);
+                                                        print_assign(type1,$2);
+                                                        store(i1);
                                                 }
                                                 else{
                                                     type1=" ";
@@ -269,13 +302,16 @@ AssignmentStmt
                                             else{
                                                 int i2=lookup_symbol(id2,scopecount);
                                                 if(i2!=-1){
-                                                    type2=symbolTable[i2].type;
+                                                    type2=typecheck(id2);
+                                                    print_assign(type1,$2);
+                                                    store(i2);
                                                 }
                                                 else{
                                                     type2=" ";
                                                 }
                                                 
                                             }
+                                            //printf("type : %s %s\n",type1,type2);
                                             if(strcmp(type1,type2)!=0){
                                                 if(strcmp(type1," ")!=0 && strcmp(type2," ")!=0){
                                                     printf("error\:%d\: invalid operation\: %s (mismatched types %s and %s)\n",yylineno,$2,type1,type2);
@@ -283,15 +319,21 @@ AssignmentStmt
                                                 }
                                             }
                                             printf("%s\n",$2);
+                                            
                                         }
 ;
 assign_op
-    : ASSIGN  {$$ = "ASSIGN";}  
-    | ADD_ASSIGN    {$$ = "ADD_ASSIGN";}  
-    | SUB_ASSIGN    {$$ = "SUB_ASSIGN";}  
-    | MUL_ASSIGN    {$$ = "MUL_ASSIGN";}  
-    | QUO_ASSIGN    {$$ = "QUO_ASSIGN";}  
-    | REM_ASSIGN    {$$ = "REM_ASSIGN";}  
+    : ASSIGN  {$$ = "ASSIGN";if(assign_flag==1){assign_flag=0;}}  
+    | ADD_ASSIGN    {$$ = "ADD_ASSIGN";if(assign_flag==1){assign_flag=0;} 
+                        //fprintf(file,"iadd\n");
+                    }  
+    | SUB_ASSIGN    {$$ = "SUB_ASSIGN";if(assign_flag==1){assign_flag=0;}
+                        //fprintf(file,"isub\n");
+    
+                    } 
+    | MUL_ASSIGN    {$$ = "MUL_ASSIGN";if(assign_flag==1){assign_flag=0;}} 
+    | QUO_ASSIGN    {$$ = "QUO_ASSIGN";if(assign_flag==1){assign_flag=0;}}
+    | REM_ASSIGN    {$$ = "REM_ASSIGN";if(assign_flag==1){assign_flag=0;}}  
 ;
 
 ExpressionStmt
@@ -657,10 +699,14 @@ Operand
                 char ident[100];
                 char nameforlook[30]={};
                 strcpy(nameforlook,$1);
+                //printf("%s\n",nameforlook);
                 int idaddress=lookup_symbol(nameforlook,scopecount);
                 if(idaddress!=-1){
                     printf("IDENT (name=%s, address=%d)\n",$1,idaddress);
-                    loadID(idaddress);
+                    if(assign_flag!=1){
+                        loadID(idaddress);
+                    }
+                    
                 }
                 else{
                     printf("error\:%d\: undefined\: %s\n",yylineno+1,nameforlook);
@@ -767,10 +813,10 @@ Block
     : LBRACE1 StatementList RBRACE1  
 ;
 LBRACE1
-    :LBRACE{scopecount++;}
+    :LBRACE {scopecount++;}
 ;
 RBRACE1
-    :RBRACE{dump_symbol(scopecount);scopecount--;}
+    :RBRACE {dump_symbol(scopecount);scopecount--;}
 ;
 
 IfStmt
@@ -1061,10 +1107,10 @@ static void dump_symbol(int scope) {
 
 static void print_symbol() {
     printf("> Print\n");
-    printf("%-10s%-10s%-10s%-10s%-10s%-10s%-10s\n",
+    printf("%-10s%-10s%-10s%-10s%-10s%-10s%-50s\n",
            "Index", "Name", "Type", "Address", "Lineno", "Element type","scope");
     for(int i=0;i<indexcount;i++){
-            printf("%-10d%-10s%-10s%-10d%-10d%-10s%-10d\n",
+            printf("%-10d%-10s%-10s%-10d%-10d%-10s%-50d\n",
                 symbolTable[i].index, symbolTable[i].name, symbolTable[i].type, 
                 symbolTable[i].address,symbolTable[i].lineno, symbolTable[i].etype,
                 symbolTable[i].scopenum);
@@ -1080,6 +1126,9 @@ static void loadID(int index){
     }
     if(strcmp(symbolTable[index].type,"int32")==0){
         fprintf(file,"iload %d\n",index);
+    }
+    if(strcmp(symbolTable[index].type,"array")==0){
+        fprintf(file,"aload %d\n",index);
     }
 }
 static void outputbool(int ln){
@@ -1153,6 +1202,15 @@ static void store(int index){
     if(strcmp(symbolTable[index].type,"int32")==0){
         fprintf(file,"istore %d\n",index);
     }
+    if(strcmp(symbolTable[index].type,"array")==0){
+        if(strcmp(symbolTable[index].etype,"int32")==0){
+            fprintf(file,"iastore\n");
+        }
+        if(strcmp(symbolTable[index].etype,"float32")==0){
+            fprintf(file,"fastore %d\n",index);
+        }
+        
+    }
 }
 char * typecheck(char *id){
     char *type = malloc(5);
@@ -1165,11 +1223,69 @@ char * typecheck(char *id){
     else{
         int i=lookup_symbol(id,scopecount);
         if(i!=-1){
-            type=symbolTable[i].type;
+            if(strcmp(symbolTable[i].type,"array")==0){
+                type=symbolTable[i].etype;
+            }
+            else{
+                type=symbolTable[i].type;
+            }
+            
         }
         else{
             type=" ";
         }
     }
     return type;
+}
+
+static void initial(int index){
+    if(strcmp(symbolTable[index].type,"string")==0){
+        fprintf(file,"ldc \"\"\n");
+    }
+    if(strcmp(symbolTable[index].type,"float32")==0){
+        fprintf(file,"ldc 0.0\n");
+    }
+    if(strcmp(symbolTable[index].type,"int32")==0){
+        fprintf(file,"ldc 0\n");
+    }
+    if(strcmp(symbolTable[index].type,"bool")==0){
+        fprintf(file,"iconst_0\n");
+    }
+    if(strcmp(symbolTable[index].type,"array")==0){
+        fprintf(file,"newarray int\n");        
+    }
+}
+
+static void print_assign(char * type,char * op){
+    if(strcmp(type,"float32")==0){
+        if(strcmp(op,"ADD_ASSIGN")==0){
+            fprintf(file,"fadd\n");
+        }
+        if(strcmp(op,"SUB_ASSIGN")==0){
+            fprintf(file,"fsub\n");
+        }
+        if(strcmp(op,"MUL_ASSIGN")==0){
+            fprintf(file,"fmul\n");
+        }
+        if(strcmp(op,"QUO_ASSIGN")==0){
+            fprintf(file,"fdiv\n");
+        }
+    }
+    if(strcmp(type,"int32")==0){
+        if(strcmp(op,"ADD_ASSIGN")==0){
+            fprintf(file,"iadd\n");
+        }
+        if(strcmp(op,"SUB_ASSIGN")==0){
+            fprintf(file,"isub\n");
+        }
+        if(strcmp(op,"MUL_ASSIGN")==0){
+            fprintf(file,"imul\n");
+        }
+        if(strcmp(op,"QUO_ASSIGN")==0){
+            fprintf(file,"idiv\n");
+        }
+        if(strcmp(op,"REM_ASSIGN")==0){
+            fprintf(file,"irem\n");
+        }
+    }
 }
