@@ -18,6 +18,7 @@
     static int f_flag=0;
     static int if_flag=0;
     static int p_flag=0;
+    static tag_count=0;
     typedef struct Symbols {
         int index;
         char* name;
@@ -318,11 +319,15 @@ Expression
                                         //printf("first %s\n",$1);
                                         //printf("third %s\n",$3);
                                         if(strcmp($1,"INT_LIT")==0||strcmp($3,"INT_LIT")==0){
-                                            printf("error\:%d\: invalid operation\: (operator LOR not defined on int32)\n",yylineno);
-                                            HAS_ERROR = TRUE;
+                                            if(strcmp($3,"TRUE")!=0&&strcmp($3,"FALSE")!=0){
+                                                printf("error\:%d\: invalid operation\: (operator LOR not defined on int32)\n",yylineno);
+                                                HAS_ERROR = TRUE;
+                                            }
+                                            
                                         }
                                         //$$="LOR";
                                         printf("%s\n","LOR");
+                                        fprintf(file,"ior\n");
                                     }
     | Expression1 
 ;
@@ -334,6 +339,7 @@ Expression1
                                         }
                                         //$$="LAND";
                                         printf("%s\n","LAND");
+                                        fprintf(file,"iand\n");
                                     }
     | Expression2
 ;
@@ -368,6 +374,24 @@ Expression2
                                         if(p_flag==-1){p_flag=1;}
                                         if(f_flag==-1){f_flag=1;}
                                         if(if_flag==-1){if_flag=1;}
+                                        //outputcompare("GTR");
+                                        //printf("1 %s\n",$1);
+                                        //printf("3 %s\n",$3);
+
+                                        int temp_tag=tag_count;
+                                        if(strcmp("INT_LIT",$1)==0){
+                                            fprintf(file,"isub\n");
+                                        }
+                                        if(strcmp("FLOAT_LIT",$1)==0){
+                                            fprintf(file,"fcmpl\n");
+                                        }
+                                        fprintf(file,"ifgt L_cmp_%d\n",temp_tag);//0
+                                        fprintf(file,"iconst_0\n");
+                                        fprintf(file,"goto L_cmp_%d\n",temp_tag+1);//1
+                                        fprintf(file,"L_cmp_%d :\n",temp_tag);//0
+                                        fprintf(file,"iconst_1\n");
+                                        fprintf(file,"L_cmp_%d :\n",temp_tag+1);//1
+                                        tag_count+=2;
                                     }
     | Expression2  GEQ Expression3  {   //$$="GEQ";
                                         printf("%s\n","GEQ");
@@ -384,6 +408,7 @@ Expression3
                                         char* id2=NULL;
                                         char* type1=NULL;
                                         char* type2=NULL;
+                                        
                                         char *c=strstr($1," ");
                                         if(c == NULL) {
                                             id1=$1;
@@ -391,6 +416,7 @@ Expression3
                                         }
                                         else{
                                             char * buff=strdup($1);
+                                            
                                             const char* delim = " ";
                                             char *sepstr = buff;
                                             char * name=strsep(&sepstr, delim);
@@ -407,6 +433,7 @@ Expression3
                                             }
                                         }
                                         //printf("%s %s\n",id1,id2);
+                                        //if()
                                         type1=typecheck(id1);
                                         type2=typecheck(id2);
                                         //printf("%s %s\n",type1,type2);
@@ -417,7 +444,7 @@ Expression3
                                             }
                                         }
                                         printf("%s\n","ADD");
-                                        if(strcmp(type1,"int32")==0&&strcmp(type2,"int32")==0){
+                                        if(strcmp(type1,"int32")==0||strcmp(type2,"int32")==0){
                                             fprintf(file,"iadd\n");
                                         }
                                         else if(strcmp(type1,"float32")==0&&strcmp(type2,"float32")==0){
@@ -505,10 +532,10 @@ Expression4
                                     type1=typecheck(id1);
                                     type2=typecheck(id2);
                                     printf("%s\n","MUL");
-                                    if(strcmp(type1,"int32")==0&&strcmp(type2,"int32")==0){
+                                    if(strcmp(type1,"int32")==0){
                                         fprintf(file,"imul\n");
                                     }
-                                    else if(strcmp(type1,"float32")==0&&strcmp(type2,"float32")==0){
+                                    else if(strcmp(type1,"float32")==0){
                                         fprintf(file,"fmul\n");
                                     }
 
@@ -595,14 +622,27 @@ Expression4
     | UnaryExpr     
 ;
 UnaryExpr
-    : ADD UnaryExpr  {printf("%s\n","POS");
-                        $$="POS";
+    : ADD UnaryExpr  {
+                        printf("%s\n","POS");
+                        
+                        $$=$2;
                         }
-    | SUB UnaryExpr  {printf("%s\n","NEG");
-                        $$="SUB";
+    | SUB UnaryExpr  {
+                        printf("%s\n","NEG");
+                        //printf("222 %s\n",$2);
+                        if(strcmp($2,"INT_LIT")==0){
+                             fprintf(file,"ineg\n");
                         }
-    | NOT UnaryExpr  {printf("%s\n","NOT");
-                        $$="NOT";
+                        if(strcmp($2,"FLOAT_LIT")==0){
+                             fprintf(file,"fneg\n");
+                        }
+                        $$=$2;
+                        }
+    | NOT UnaryExpr  {
+                        printf("%s\n","NOT");
+                        $$=$2;
+                        fprintf(file,"iconst_1\n");
+                        fprintf(file,"ixor\n");
                         }
     | PrimaryExpr   
 ;
@@ -636,8 +676,8 @@ Operand
 Literal
     : INT_LIT   {printf("INT_LIT %d\n",$1);$$="INT_LIT";fprintf(file,"ldc %d\n",yylval);}
     | FLOAT_LIT     {printf("FLOAT_LIT %6f\n",$1);$$="FLOAT_LIT";fprintf(file,"ldc %f\n",yylval);}
-    | TRUE      {printf("TRUE\n"); $$="TRUE";fprintf(file,"ldc %s\n","iconst_1");}
-    | FALSE     {printf("FALSE\n");$$="FALSE";fprintf(file,"ldc %s\n","iconst_0");}
+    | TRUE      {printf("TRUE\n"); $$="TRUE";fprintf(file,"%s\n","iconst_1");}
+    | FALSE     {printf("FALSE\n");$$="FALSE";fprintf(file,"%s\n","iconst_0");}
     | STRING_LIT   {printf("STRING_LIT %s\n",$1);$$="STRING_LIT";fprintf(file,"ldc \"%s\"\n",yylval);}
 ;
 
@@ -826,6 +866,7 @@ PrintStmt
     : PRINT {p_flag=-1;} LPAREN Expression RPAREN    {
                                             char * buff=strdup($4);
                                             char * idid;
+                                            
                                             char *c=strstr(buff, "[");
                                             if(c == NULL) {
                                                 const char* idcut1 = ")";
@@ -837,23 +878,37 @@ PrintStmt
                                                 char *sepstr = buff;
                                                 idid=strsep(&sepstr, idcut2);
                                             }
+                                            //printf("oaoa1 :%s\n",idid);
+                                            //print_symbol(0);
+                                            char *d=strstr(buff, " ");
+                                            if(d != NULL) {
+                                                const char* idcut = " ";
+                                                char *sepstr = idid;
+                                                idid=strsep(&sepstr, idcut);
+                                            }
                                             //printf("oaoa : %s\n",idid);
                                             int k=lookup_symbol(idid,scopecount);
                                             char* ptype=NULL;
                                             if(p_flag==1){
                                                 ptype="bool";
-
                                             }
-                                            if(symbolTable[k].type=="array"){
+                                            else if(symbolTable[k].type=="array"){
                                                 ptype=symbolTable[k].etype;
                                             }
-                                            else if(k!=-1){
+                                            else if(k!=-1){//ID
                                                 ptype=symbolTable[k].type;
+                                            }
+                                            else if(strcmp(idid,"FLOAT_LIT")==0){//float_lit
+                                                ptype= "float32";
+                                            }
+                                            else if(strcmp(idid,"INT_LIT")==0){//int_lit
+                                                ptype= "int32";
                                             }
                                             else{
                                                 ptype="string";
                                             }
                                             printf("PRINT %s\n",ptype);
+                                            output(ptype,0);
                                             p_flag=0;
                                         }
     | PRINTLN{p_flag=-1;} LPAREN Expression RPAREN  {
@@ -885,15 +940,8 @@ PrintStmt
                                             int k=lookup_symbol(idid,scopecount);
                                             //printf("oaoa12 :%d %d\n",scopecount,k);
                                             char* ptype=NULL;
-                                            /*
-                                            if(pl==2){
-                                                ptype= "bool";
-                                                pl=0;
-                                            }
-                                            */
                                             if(p_flag==1){
                                                 ptype="bool";
-
                                             }
                                             else if(symbolTable[k].type=="array"){
                                                 ptype=symbolTable[k].etype;
@@ -912,7 +960,6 @@ PrintStmt
                                             }
                                             printf("PRINTLN %s\n",ptype);
                                             output(ptype,1);
-
                                             p_flag=0;
                                         }
 ;
@@ -1035,29 +1082,61 @@ static void loadID(int index){
         fprintf(file,"iload %d\n",index);
     }
 }
-static void output(char* type,int ln){
+static void outputbool(int ln){
+    int temp_tag=tag_count;
+    fprintf(file,"ifne L_cmp_%d\n",temp_tag);
+    fprintf(file,"ldc \"false\"\n");
+    fprintf(file,"goto L_cmp_%d\n",temp_tag+1);
+    fprintf(file,"L_cmp_%d:\n",temp_tag);
+    fprintf(file,"ldc \"true\"\n");
+    fprintf(file,"L_cmp_%d :\n",temp_tag+1);
+    tag_count+=2;
     fprintf(file,"getstatic java/lang/System/out Ljava/io/PrintStream;\n");
     fprintf(file,"swap\n");
     if(ln==1){
-        if(strcmp(type,"string")==0){
-            fprintf(file,"invokevirtual java/io/PrintStream/println(Ljava/lang/String;)V\n");
+        fprintf(file,"invokevirtual java/io/PrintStream/println(Ljava/lang/String;)V\n");
+    }
+    else{
+        fprintf(file,"invokevirtual java/io/PrintStream/print(Ljava/lang/String;)V\n");
+    }
+}
+
+static void output(char* type,int ln){
+    
+    if(ln==1){
+        if(strcmp(type,"bool")==0){
+            outputbool(1);
         }
-        if(strcmp(type,"float32")==0){
-            fprintf(file,"invokevirtual java/io/PrintStream/println(F)V\n");
-        }
-        if(strcmp(type,"int32")==0){
-            fprintf(file,"invokevirtual java/io/PrintStream/println(I)V\n");
+        else{
+            fprintf(file,"getstatic java/lang/System/out Ljava/io/PrintStream;\n");
+            fprintf(file,"swap\n");
+            if(strcmp(type,"string")==0){
+                fprintf(file,"invokevirtual java/io/PrintStream/println(Ljava/lang/String;)V\n");
+            }
+            if(strcmp(type,"float32")==0){
+                fprintf(file,"invokevirtual java/io/PrintStream/println(F)V\n");
+            }
+            if(strcmp(type,"int32")==0){
+                fprintf(file,"invokevirtual java/io/PrintStream/println(I)V\n");
+            }
         }
     }
     else{
-        if(strcmp(type,"string")==0){
-            fprintf(file,"invokevirtual java/io/PrintStream/print(Ljava/lang/String;)V\n");
+         if(strcmp(type,"bool")==0){
+            outputbool(0);
         }
-        if(strcmp(type,"float32")==0){
-            fprintf(file,"invokevirtual java/io/PrintStream/print(F)V\n");
-        }
-        if(strcmp(type,"int32")==0){
-            fprintf(file,"invokevirtual java/io/PrintStream/print(I)V\n");
+        else{
+            fprintf(file,"getstatic java/lang/System/out Ljava/io/PrintStream;\n");
+            fprintf(file,"swap\n");
+            if(strcmp(type,"string")==0){
+                fprintf(file,"invokevirtual java/io/PrintStream/print(Ljava/lang/String;)V\n");
+            }
+            if(strcmp(type,"float32")==0){
+                fprintf(file,"invokevirtual java/io/PrintStream/print(F)V\n");
+            }
+            if(strcmp(type,"int32")==0){
+                fprintf(file,"invokevirtual java/io/PrintStream/print(I)V\n");
+            }
         }
     }
 }
