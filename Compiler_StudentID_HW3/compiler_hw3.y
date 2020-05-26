@@ -135,7 +135,7 @@ DeclarationStmt
                             substr =strsep(&sepstr, arrcut);
                             char arrtype[8]={};
                             strncpy(arrtype,sepstr,strlen(sepstr)-1);
-                            arrtype[strlen(sepstr)]="\0";
+                            arrtype[strlen(sepstr)]='\0';
                             //printf("len %d\n",strlen(sepstr));
                             //printf("type %s\n",sepstr);
                             //printf("type %s\n",arrtype);
@@ -206,7 +206,7 @@ DeclarationStmt
                                                 substr =strsep(&sepstr, arrcut);
                                                 char arrtype[8]={};
                                                 strncpy(arrtype,sepstr,strlen(sepstr)-1);
-                                                arrtype[strlen(sepstr)]="\0";
+                                                arrtype[strlen(sepstr)]='\0';
                                                 //printf("len %d\n",strlen(sepstr));
                                                 //printf("type %s\n",sepstr);
                                                 //printf("type %s\n",arrtype);
@@ -325,10 +325,8 @@ AssignmentStmt
 assign_op
     : ASSIGN  {$$ = "ASSIGN";if(assign_flag==1){assign_flag=0;}}  
     | ADD_ASSIGN    {$$ = "ADD_ASSIGN";if(assign_flag==1){assign_flag=0;} 
-                        //fprintf(file,"iadd\n");
                     }  
     | SUB_ASSIGN    {$$ = "SUB_ASSIGN";if(assign_flag==1){assign_flag=0;}
-                        //fprintf(file,"isub\n");
     
                     } 
     | MUL_ASSIGN    {$$ = "MUL_ASSIGN";if(assign_flag==1){assign_flag=0;}} 
@@ -392,6 +390,22 @@ Expression2
                                         if(p_flag==-1){p_flag=1;}
                                         if(f_flag==-1){f_flag=1;}
                                         if(if_flag==-1){if_flag=1;}
+                                        int temp_tag=tag_count;
+                                        //printf("%s\n",$1);
+                                        if(strcmp("INT_LIT",$1)==0||strcmp("INT_LIT",$3)==0){
+                                            fprintf(file,"isub\n");
+                                        }
+                                        if(strcmp("FLOAT_LIT",$1)==0||strcmp("FLOAT_LIT",$3)==0){
+                                            fprintf(file,"fcmpl\n");
+                                        }
+
+                                        fprintf(file,"ifeq L_cmp_%d\n",temp_tag);//0
+                                        fprintf(file,"iconst_0\n");
+                                        fprintf(file,"goto L_cmp_%d\n",temp_tag+1);//1
+                                        fprintf(file,"L_cmp_%d :\n",temp_tag);//0
+                                        fprintf(file,"iconst_1\n");
+                                        fprintf(file,"L_cmp_%d :\n",temp_tag+1);//1
+                                        tag_count+=2;
                                     }
     | Expression2  NEQ Expression3  {   //$$="NEQ";
                                         printf("%s\n","NEQ");
@@ -421,10 +435,10 @@ Expression2
                                         //printf("3 %s\n",$3);
 
                                         int temp_tag=tag_count;
-                                        if(strcmp("INT_LIT",$1)==0){
+                                        if(strcmp("INT_LIT",$1)==0||strcmp("INT_LIT",$3)==0){
                                             fprintf(file,"isub\n");
                                         }
-                                        if(strcmp("FLOAT_LIT",$1)==0){
+                                        if(strcmp("FLOAT_LIT",$1)==0||strcmp("FLOAT_LIT",$3)==0){
                                             fprintf(file,"fcmpl\n");
                                         }
                                         fprintf(file,"ifgt L_cmp_%d\n",temp_tag);//0
@@ -822,13 +836,15 @@ RBRACE1
 ;
 
 IfStmt
-    : IFT Condition Block   {if_flag=0;}
-    | IFT Condition Block ELSE IfStmt   {if_flag=0;}
-    | IFT Condition Block ELSE Block    {if_flag=0;}
+    : IFT Condition{fprintf(file,"ifeq L_if_exit\n");} Block{if_flag=0;fprintf(file,"L_if_exit\:\n");}
+    | IFT Condition{fprintf(file,"ifeq L_if_false\n");}  Block ELSE IfStmt   {if_flag=0;}
+    | IFT Condition{fprintf(file,"ifeq L_if_false\n");}  Block ELSE Block    {if_flag=0;}
 ;
 
 IFT
-    :IF {if_flag=-1;}
+    :IF {
+            if_flag=-1;
+        }
 ;
 Condition
     : Expression    {
@@ -891,12 +907,10 @@ Condition
 
 ForStmt
     : FORT ForClause Block 
-    | FORT Condition Block   {  
-                        f_flag=0;
-                    }
+    | FORT Condition{fprintf(file,"ifeq L_for_exit\n");} Block{f_flag=0;fprintf(file,"goto L_for_begin\n");fprintf(file,"L_for_exit :\n");}
 ;
 FORT
-    :FOR {f_flag=-1;}
+    :FOR {f_flag=-1;fprintf(file,"L_for_begin :\n");}
 ;
 ForClause
     : InitStmt SEMICOLON Condition SEMICOLON PostStmt
