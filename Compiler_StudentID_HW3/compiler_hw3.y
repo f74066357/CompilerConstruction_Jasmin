@@ -450,7 +450,6 @@ Expression3
                                         char* id2=NULL;
                                         char* type1=NULL;
                                         char* type2=NULL;
-                                        
                                         char *c=strstr($1," ");
                                         if(c == NULL) {
                                             id1=$1;
@@ -458,7 +457,6 @@ Expression3
                                         }
                                         else{
                                             char * buff=strdup($1);
-                                            
                                             const char* delim = " ";
                                             char *sepstr = buff;
                                             char * name=strsep(&sepstr, delim);
@@ -474,7 +472,7 @@ Expression3
                                                 id2=temp;
                                             }
                                         }
-                                        //printf("%s %s\n",id1,id2);
+                                        //printf("111 %s\n222 %s\n",id1,id2);
                                         //if()
                                         type1=typecheck(id1);
                                         type2=typecheck(id2);
@@ -489,7 +487,7 @@ Expression3
                                         if(strcmp(type1,"int32")==0||strcmp(type2,"int32")==0){
                                             fprintf(file,"iadd\n");
                                         }
-                                        else if(strcmp(type1,"float32")==0&&strcmp(type2,"float32")==0){
+                                        if(strcmp(type1,"float32")==0||strcmp(type2,"float32")==0){
                                             fprintf(file,"fadd\n");
                                         }
 
@@ -734,12 +732,15 @@ IndexExpr
 
 ConversionExpr
     : Type LPAREN Expression RPAREN     {
+                                            //printf("111%s\n",$1);
                                             char *conv=NULL;
                                             if(strcmp($1,"INT")==0){
                                                 conv="I";
+                                                fprintf(file,"f2i\n");
                                             }
                                             else if(strcmp($1,"FLOAT")==0){
                                                 conv="F";
+                                                fprintf(file,"i2f\n");
                                             } 
                                             char * convo=NULL;
                                             if(strcmp($3,"INT_LIT")==0){
@@ -766,6 +767,7 @@ ConversionExpr
                                             }
                                             
                                             printf("%s to %s\n",convo,conv);
+
                                         }
 ;
 
@@ -1214,11 +1216,11 @@ static void store(int index){
 }
 char * typecheck(char *id){
     char *type = malloc(5);
-    if(strcmp(id,"INT_LIT")==0){
-        type="int32";
-    }
-    else if(strcmp(id,"FLOAT_LIT")==0){
+    if(strcmp(id,"FLOAT_LIT")==0||strcmp(id,"FLOAT")==0){
         type="float32";
+    }
+    else if(strcmp(id,"INT_LIT")==0||strcmp(id,"IN")==0){
+        type="int32";
     }
     else{
         int i=lookup_symbol(id,scopecount);
