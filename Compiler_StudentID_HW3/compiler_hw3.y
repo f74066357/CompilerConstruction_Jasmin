@@ -19,8 +19,14 @@
     static int if_flag=0;
     static int p_flag=0;
     static int assign_flag=0;
+    static int if_id=0;
+    static int for_id=0; 
     static int arr_flag=0;
-    static tag_count=0;
+    static int tag_count=0;
+    static int lfalse_count=0;
+    static int else_count=0;
+    static int forbegin_count=0;
+    static int ifexit_count=0;
     typedef struct Symbols {
         int index;
         char* name;
@@ -273,6 +279,8 @@ AssignmentStmt
                                             }
 
                                             //printf("id\: %s %s\n",id1,id2);
+                                            
+                                            //fprintf(file,"aload %d\n",index);
                                             if(strcmp($2,"ASSIGN")!=0){
                                                 loadID(id1,scopecount);
                                             }
@@ -426,6 +434,21 @@ Expression2
                                         if(p_flag==-1){p_flag=1;}
                                         if(f_flag==-1){f_flag=1;}
                                         if(if_flag==-1){if_flag=1;}
+
+                                        int temp_tag=tag_count;
+                                        if(strcmp("INT_LIT",$1)==0||strcmp("INT_LIT",$3)==0){
+                                            fprintf(file,"isub\n");
+                                        }
+                                        if(strcmp("FLOAT_LIT",$1)==0||strcmp("FLOAT_LIT",$3)==0){
+                                            fprintf(file,"fcmpl\n");
+                                        }
+                                        fprintf(file,"ifle L_cmp_%d\n",temp_tag);//0
+                                        fprintf(file,"iconst_0\n");
+                                        fprintf(file,"goto L_cmp_%d\n",temp_tag+1);//1
+                                        fprintf(file,"L_cmp_%d :\n",temp_tag);//0
+                                        fprintf(file,"iconst_1\n");
+                                        fprintf(file,"L_cmp_%d :\n",temp_tag+1);//1
+                                        tag_count+=2;
                                     }
     | Expression2  GTR Expression3  {   //$$="GTR";
                                         printf("%s\n","GTR");
@@ -512,7 +535,15 @@ Expression3
 
                                     }
     | Expression3 SUB Expression4   {
-                                        //printf("111%s\n",$1);
+                                        printf("111%s\n",$1);
+                                        char *arr=strstr($1, "]");
+                                        if(arr != NULL) {
+                                            
+                                            fprintf(file,"swap\n");
+                                            fprintf(file,"iaload\n");
+                                            fprintf(file,"swap\n");
+
+                                        }
                                         
 
                                         //$$="SUB";
@@ -730,10 +761,19 @@ Operand
                 int idaddress=lookup_symbol(nameforlook,scopecount);
                 if(idaddress!=-1){
                     printf("IDENT (name=%s, address=%d)\n",$1,idaddress);
+                    //array load
                     if(assign_flag==1){
                         loadID($1,scopecount);
                     }
-                    if(p_flag==-1){loadID($1,scopecount);}
+                    else if(p_flag==-1){loadID($1,scopecount);}
+                    else if(if_id==1){loadID($1,scopecount);}
+                    else if(for_id==1){loadID($1,scopecount);}
+                    else{
+                        if(strcmp(symbolTable[idaddress].type,"array")==0){
+                            fprintf(file,"aload %d\n",idaddress);
+                            //fprintf(file,"swap\n");
+                        }
+                    }
                 }
                 else{
                     printf("error\:%d\: undefined\: %s\n",yylineno+1,nameforlook);
@@ -854,22 +894,51 @@ RBRACE1
 ;
 
 IfStmt
-    : IFT ConditionT Block{if_flag=0;fprintf(file,"L_if_exit\:\n");}
-    | IFT ConditionT Block ElseStmt
+    : IFT ConditionT Block  {
+                                if_flag=0;
+                                fprintf(file,"L_if_exit%d\:\n",ifexit_count);
+                                ifexit_count++;
+                            }
+    | IFT ConditionT Block ElseStmt{
+                                //fprintf(file,"%s\n","AAA");
+                                //fprintf(file,"L_if_false_%d\:\n",lfalse_count);
+
+                            }
 ;
 
 IFT
     :IF {
             if_flag=-1;
+            if_id=1;
         }
 ;
 
 ElseStmt
-    :ELSE IfStmt   {if_flag=0;}
-    |ELSE Block    {if_flag=0;}
+    :ELSE1 IfStmt   {
+                        if_flag=0;
+                        //fprintf(file,"%s\n","XXX");
+                    }
+    |ELSE1 Block    {   
+                        if_flag=0;
+                        //fprintf(file,"LLL\:\n");
+                        fprintf(file,"L_if_exit%d\:\n",ifexit_count);
+                    }
+;
+ELSE1    
+    :ELSE   {
+                else_count=1;
+                //else_count++;
+                //fprintf(file,"%d\n",else_count);
+                //fprintf(file,"L_if_false_%d\:\n",lfalse_count);
+                //lfalse_count+=1;
+            }
 ;
 ConditionT
-    :Condition  {fprintf(file,"ifeq L_if_exit\n");}
+    :Condition  {
+                    fprintf(file,"ifeq L_if_exit%d\n",ifexit_count);
+                    
+                    if_id=0;
+                }
 ;
 Condition
     : Expression    {
@@ -935,7 +1004,10 @@ ForStmt
     | FORT Condition{fprintf(file,"ifeq L_for_exit\n");} Block{f_flag=0;fprintf(file,"goto L_for_begin\n");fprintf(file,"L_for_exit :\n");}
 ;
 FORT
-    :FOR {f_flag=-1;fprintf(file,"L_for_begin :\n");}
+    :FOR {
+            for_id=1;
+            f_flag=-1;fprintf(file,"L_for_begin :\n");
+        }
 ;
 ForClause
     : InitStmt SEMICOLON Condition SEMICOLON PostStmt
@@ -1172,7 +1244,9 @@ static void loadID(char* id,int scopecount){
         }
         if(strcmp(symbolTable[index].type,"array")==0){
             fprintf(file,"aload %d\n",index);
-            arr_flag=1;
+            
+            if(assign_flag==1){
+            }
         }
     }
 }
