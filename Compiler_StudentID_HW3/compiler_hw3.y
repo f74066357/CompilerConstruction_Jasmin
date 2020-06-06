@@ -484,6 +484,7 @@ Expression2
 ;
 Expression3
     : Expression3 ADD Expression4   {
+        
                                         //$$="ADD";
                                         char* id1=NULL;
                                         char* id2=NULL;
@@ -535,16 +536,8 @@ Expression3
 
                                     }
     | Expression3 SUB Expression4   {
-                                        printf("111%s\n",$1);
-                                        char *arr=strstr($1, "]");
-                                        if(arr != NULL) {
-                                            
-                                            fprintf(file,"swap\n");
-                                            fprintf(file,"iaload\n");
-                                            fprintf(file,"swap\n");
-
-                                        }
-                                        
+                                        //printf("111%s\n",$1);
+                                                                               
 
                                         //$$="SUB";
                                         char* id1=NULL;
@@ -660,12 +653,16 @@ Expression4
                                         if(strcmp(temp2,"INT_LIT")==0){
                                             id2=temp2;
                                         }
+                                        else if(strcmp(temp2,"FLOAT_LIT")==0){
+                                            id2=temp2;
+                                        }
                                         else{
                                             strncpy(temp,$3,strlen($3)-1);
                                             id2=temp;
                                         }
                                     }
-                                    //printf("%s %s\n",id1,id2);
+                                    //printf("HAHAHAHA%s %s\n",id1,id2);
+                                    //printf("HAHAHAHA%s %s\n",type1,type2);
                                     type1=typecheck(id1);
                                     type2=typecheck(id2);
                                     printf("%s\n","QUO");
@@ -697,6 +694,9 @@ Expression4
                                         char temp2[10]={};
                                         strncpy(temp2,$3,strlen($3));
                                         if(strcmp(temp2,"INT_LIT")==0){
+                                            id2=temp2;
+                                        }
+                                        else if(strcmp(temp2,"FLOAT_LIT")==0){
                                             id2=temp2;
                                         }
                                         else{
@@ -797,7 +797,23 @@ Literal
 
 
 IndexExpr
-    : PrimaryExpr LBRACK Expression RBRACK  
+    : PrimaryExpr LBRACK Expression RBRACK  {
+                                                if(assign_flag==1||p_flag==-1){
+                                                    char * buff=strdup($1);
+                                                    char * idid;
+                                                    const char* idcut = "[";
+                                                    char *sepstr = buff;
+                                                    idid=strsep(&sepstr, idcut);
+                                                    int index=lookup_symbol(idid,scopecount);
+                                                    if(strcmp(symbolTable[index].etype,"int32")==0){
+                                                        fprintf(file,"iaload\n");
+                                                    }
+                                                    if(strcmp(symbolTable[index].etype,"float32")==0){
+                                                        fprintf(file,"faload\n");
+                                                    }
+                                                }
+
+                                            }
 ;
 
 ConversionExpr
@@ -942,6 +958,7 @@ ConditionT
 ;
 Condition
     : Expression    {
+                        
                         if(if_flag==-1){
                             if(strcmp($1,"INT_LIT")==0){
                                 printf("error\:%d\: non-bool (type int32) used as for condition\n",yylineno+1);
@@ -1371,7 +1388,12 @@ static void initial(int index){
         fprintf(file,"iconst_0\n");
     }
     if(strcmp(symbolTable[index].type,"array")==0){
-        fprintf(file,"newarray int\n");        
+        if(strcmp(symbolTable[index].etype,"int32")==0){
+            fprintf(file,"newarray int\n");
+        }
+        if(strcmp(symbolTable[index].etype,"float32")==0){
+            fprintf(file,"newarray float\n");
+        }       
     }
 }
 

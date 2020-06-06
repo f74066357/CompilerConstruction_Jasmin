@@ -584,12 +584,12 @@ static const yytype_uint16 yyrline[] =
      110,   111,   115,   185,   248,   249,   250,   253,   337,   338,
      340,   343,   344,   345,   349,   353,   354,   358,   359,   360,
      361,   365,   368,   382,   385,   394,   397,   420,   426,   432,
-     453,   477,   483,   486,   537,   599,   602,   641,   679,   720,
+     453,   477,   483,   486,   538,   592,   595,   634,   676,   720,
      723,   728,   739,   745,   748,   749,   750,   753,   756,   784,
-     791,   792,   793,   794,   795,   800,   804,   845,   864,   887,
-     890,   893,   897,   902,   910,   917,   921,   928,   937,   944,
-    1003,  1004,  1004,  1007,  1013,  1017,  1021,  1025,  1025,  1073,
-    1073
+     791,   792,   793,   794,   795,   800,   820,   861,   880,   903,
+     906,   909,   913,   918,   926,   933,   937,   944,   953,   960,
+    1020,  1021,  1021,  1024,  1030,  1034,  1038,  1042,  1042,  1090,
+    1090
 };
 #endif
 
@@ -1915,6 +1915,7 @@ yyreduce:
   case 43:
 #line 486 "compiler_hw3.y" /* yacc.c:1646  */
     {
+        
                                         //$$="ADD";
                                         char* id1=NULL;
                                         char* id2=NULL;
@@ -1965,22 +1966,14 @@ yyreduce:
                                         }
 
                                     }
-#line 1969 "y.tab.c" /* yacc.c:1646  */
+#line 1970 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 44:
-#line 537 "compiler_hw3.y" /* yacc.c:1646  */
+#line 538 "compiler_hw3.y" /* yacc.c:1646  */
     {
-                                        printf("111%s\n",(yyvsp[-2].s_val));
-                                        char *arr=strstr((yyvsp[-2].s_val), "]");
-                                        if(arr != NULL) {
-                                            
-                                            fprintf(file,"swap\n");
-                                            fprintf(file,"iaload\n");
-                                            fprintf(file,"swap\n");
-
-                                        }
-                                        
+                                        //printf("111%s\n",$1);
+                                                                               
 
                                         //$$="SUB";
                                         char* id1=NULL;
@@ -2032,11 +2025,11 @@ yyreduce:
                                             fprintf(file,"fsub\n");
                                         }
                                     }
-#line 2036 "y.tab.c" /* yacc.c:1646  */
+#line 2029 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 46:
-#line 602 "compiler_hw3.y" /* yacc.c:1646  */
+#line 595 "compiler_hw3.y" /* yacc.c:1646  */
     {//$$="MUL";
                                     char* id1=NULL;
                                     char* id2=NULL;
@@ -2076,11 +2069,11 @@ yyreduce:
                                     }
 
                                 }
-#line 2080 "y.tab.c" /* yacc.c:1646  */
+#line 2073 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 47:
-#line 641 "compiler_hw3.y" /* yacc.c:1646  */
+#line 634 "compiler_hw3.y" /* yacc.c:1646  */
     {//$$="QUO";
                                     char* id1=NULL;
                                     char* id2=NULL;
@@ -2103,12 +2096,16 @@ yyreduce:
                                         if(strcmp(temp2,"INT_LIT")==0){
                                             id2=temp2;
                                         }
+                                        else if(strcmp(temp2,"FLOAT_LIT")==0){
+                                            id2=temp2;
+                                        }
                                         else{
                                             strncpy(temp,(yyvsp[0].s_val),strlen((yyvsp[0].s_val))-1);
                                             id2=temp;
                                         }
                                     }
-                                    //printf("%s %s\n",id1,id2);
+                                    //printf("HAHAHAHA%s %s\n",id1,id2);
+                                    //printf("HAHAHAHA%s %s\n",type1,type2);
                                     type1=typecheck(id1);
                                     type2=typecheck(id2);
                                     printf("%s\n","QUO");
@@ -2119,11 +2116,11 @@ yyreduce:
                                         fprintf(file,"fdiv\n");
                                     }
                                     }
-#line 2123 "y.tab.c" /* yacc.c:1646  */
+#line 2120 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 48:
-#line 679 "compiler_hw3.y" /* yacc.c:1646  */
+#line 676 "compiler_hw3.y" /* yacc.c:1646  */
     {
                                     //$$="REM";
                                     char* id1=NULL;
@@ -2145,6 +2142,9 @@ yyreduce:
                                         char temp2[10]={};
                                         strncpy(temp2,(yyvsp[0].s_val),strlen((yyvsp[0].s_val)));
                                         if(strcmp(temp2,"INT_LIT")==0){
+                                            id2=temp2;
+                                        }
+                                        else if(strcmp(temp2,"FLOAT_LIT")==0){
                                             id2=temp2;
                                         }
                                         else{
@@ -2285,8 +2285,30 @@ yyreduce:
 #line 2286 "y.tab.c" /* yacc.c:1646  */
     break;
 
+  case 65:
+#line 800 "compiler_hw3.y" /* yacc.c:1646  */
+    {
+                                                if(assign_flag==1||p_flag==-1){
+                                                    char * buff=strdup((yyvsp[-3].s_val));
+                                                    char * idid;
+                                                    const char* idcut = "[";
+                                                    char *sepstr = buff;
+                                                    idid=strsep(&sepstr, idcut);
+                                                    int index=lookup_symbol(idid,scopecount);
+                                                    if(strcmp(symbolTable[index].etype,"int32")==0){
+                                                        fprintf(file,"iaload\n");
+                                                    }
+                                                    if(strcmp(symbolTable[index].etype,"float32")==0){
+                                                        fprintf(file,"faload\n");
+                                                    }
+                                                }
+
+                                            }
+#line 2308 "y.tab.c" /* yacc.c:1646  */
+    break;
+
   case 66:
-#line 804 "compiler_hw3.y" /* yacc.c:1646  */
+#line 820 "compiler_hw3.y" /* yacc.c:1646  */
     {
                                             //printf("111%s\n",$1);
                                             char *conv=NULL;
@@ -2325,11 +2347,11 @@ yyreduce:
                                             printf("%s to %s\n",convo,conv);
 
                                         }
-#line 2329 "y.tab.c" /* yacc.c:1646  */
+#line 2351 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 67:
-#line 845 "compiler_hw3.y" /* yacc.c:1646  */
+#line 861 "compiler_hw3.y" /* yacc.c:1646  */
     {
                             printf("%s\n","INC");
                             //printf("inc\: %s\n",$1);
@@ -2349,11 +2371,11 @@ yyreduce:
                             }
                             store(index);
                         }
-#line 2353 "y.tab.c" /* yacc.c:1646  */
+#line 2375 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 68:
-#line 864 "compiler_hw3.y" /* yacc.c:1646  */
+#line 880 "compiler_hw3.y" /* yacc.c:1646  */
     {
                             printf("%s\n","DEC");
 
@@ -2374,71 +2396,71 @@ yyreduce:
                             store(index);
 
                         }
-#line 2378 "y.tab.c" /* yacc.c:1646  */
+#line 2400 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 70:
-#line 890 "compiler_hw3.y" /* yacc.c:1646  */
+#line 906 "compiler_hw3.y" /* yacc.c:1646  */
     {scopecount++;}
-#line 2384 "y.tab.c" /* yacc.c:1646  */
+#line 2406 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 71:
-#line 893 "compiler_hw3.y" /* yacc.c:1646  */
+#line 909 "compiler_hw3.y" /* yacc.c:1646  */
     {dump_symbol(scopecount);scopecount--;}
-#line 2390 "y.tab.c" /* yacc.c:1646  */
+#line 2412 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 72:
-#line 897 "compiler_hw3.y" /* yacc.c:1646  */
+#line 913 "compiler_hw3.y" /* yacc.c:1646  */
     {
                                 if_flag=0;
                                 fprintf(file,"L_if_exit%d\:\n",ifexit_count);
                                 ifexit_count++;
                             }
-#line 2400 "y.tab.c" /* yacc.c:1646  */
+#line 2422 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 73:
-#line 902 "compiler_hw3.y" /* yacc.c:1646  */
+#line 918 "compiler_hw3.y" /* yacc.c:1646  */
     {
                                 //fprintf(file,"%s\n","AAA");
                                 //fprintf(file,"L_if_false_%d\:\n",lfalse_count);
 
                             }
-#line 2410 "y.tab.c" /* yacc.c:1646  */
+#line 2432 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 74:
-#line 910 "compiler_hw3.y" /* yacc.c:1646  */
+#line 926 "compiler_hw3.y" /* yacc.c:1646  */
     {
             if_flag=-1;
             if_id=1;
         }
-#line 2419 "y.tab.c" /* yacc.c:1646  */
+#line 2441 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 75:
-#line 917 "compiler_hw3.y" /* yacc.c:1646  */
+#line 933 "compiler_hw3.y" /* yacc.c:1646  */
     {
                         if_flag=0;
                         //fprintf(file,"%s\n","XXX");
                     }
-#line 2428 "y.tab.c" /* yacc.c:1646  */
+#line 2450 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 76:
-#line 921 "compiler_hw3.y" /* yacc.c:1646  */
+#line 937 "compiler_hw3.y" /* yacc.c:1646  */
     {   
                         if_flag=0;
                         //fprintf(file,"LLL\:\n");
                         fprintf(file,"L_if_exit%d\:\n",ifexit_count);
                     }
-#line 2438 "y.tab.c" /* yacc.c:1646  */
+#line 2460 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 77:
-#line 928 "compiler_hw3.y" /* yacc.c:1646  */
+#line 944 "compiler_hw3.y" /* yacc.c:1646  */
     {
                 else_count=1;
                 //else_count++;
@@ -2446,22 +2468,23 @@ yyreduce:
                 //fprintf(file,"L_if_false_%d\:\n",lfalse_count);
                 //lfalse_count+=1;
             }
-#line 2450 "y.tab.c" /* yacc.c:1646  */
+#line 2472 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 78:
-#line 937 "compiler_hw3.y" /* yacc.c:1646  */
+#line 953 "compiler_hw3.y" /* yacc.c:1646  */
     {
                     fprintf(file,"ifeq L_if_exit%d\n",ifexit_count);
                     
                     if_id=0;
                 }
-#line 2460 "y.tab.c" /* yacc.c:1646  */
+#line 2482 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 79:
-#line 944 "compiler_hw3.y" /* yacc.c:1646  */
+#line 960 "compiler_hw3.y" /* yacc.c:1646  */
     {
+                        
                         if(if_flag==-1){
                             if(strcmp((yyvsp[0].s_val),"INT_LIT")==0){
                                 printf("error\:%d\: non-bool (type int32) used as for condition\n",yylineno+1);
@@ -2517,38 +2540,38 @@ yyreduce:
                             }
                         }
                     }
-#line 2521 "y.tab.c" /* yacc.c:1646  */
+#line 2544 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 81:
-#line 1004 "compiler_hw3.y" /* yacc.c:1646  */
+#line 1021 "compiler_hw3.y" /* yacc.c:1646  */
     {fprintf(file,"ifeq L_for_exit\n");}
-#line 2527 "y.tab.c" /* yacc.c:1646  */
+#line 2550 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 82:
-#line 1004 "compiler_hw3.y" /* yacc.c:1646  */
+#line 1021 "compiler_hw3.y" /* yacc.c:1646  */
     {f_flag=0;fprintf(file,"goto L_for_begin\n");fprintf(file,"L_for_exit :\n");}
-#line 2533 "y.tab.c" /* yacc.c:1646  */
+#line 2556 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 83:
-#line 1007 "compiler_hw3.y" /* yacc.c:1646  */
+#line 1024 "compiler_hw3.y" /* yacc.c:1646  */
     {
             for_id=1;
             f_flag=-1;fprintf(file,"L_for_begin :\n");
         }
-#line 2542 "y.tab.c" /* yacc.c:1646  */
+#line 2565 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 87:
-#line 1025 "compiler_hw3.y" /* yacc.c:1646  */
+#line 1042 "compiler_hw3.y" /* yacc.c:1646  */
     {p_flag=-1;}
-#line 2548 "y.tab.c" /* yacc.c:1646  */
+#line 2571 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 88:
-#line 1025 "compiler_hw3.y" /* yacc.c:1646  */
+#line 1042 "compiler_hw3.y" /* yacc.c:1646  */
     {
                                             char * buff=strdup((yyvsp[-1].s_val));
                                             char * idid;
@@ -2597,17 +2620,17 @@ yyreduce:
                                             output(ptype,0);
                                             p_flag=0;
                                         }
-#line 2601 "y.tab.c" /* yacc.c:1646  */
+#line 2624 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 89:
-#line 1073 "compiler_hw3.y" /* yacc.c:1646  */
+#line 1090 "compiler_hw3.y" /* yacc.c:1646  */
     {p_flag=-1;}
-#line 2607 "y.tab.c" /* yacc.c:1646  */
+#line 2630 "y.tab.c" /* yacc.c:1646  */
     break;
 
   case 90:
-#line 1073 "compiler_hw3.y" /* yacc.c:1646  */
+#line 1090 "compiler_hw3.y" /* yacc.c:1646  */
     {
                                             //printf("oaoa :%s\n",$4);
                                             char * buff=strdup((yyvsp[-1].s_val));
@@ -2659,11 +2682,11 @@ yyreduce:
                                             output(ptype,1);
                                             p_flag=0;
                                         }
-#line 2663 "y.tab.c" /* yacc.c:1646  */
+#line 2686 "y.tab.c" /* yacc.c:1646  */
     break;
 
 
-#line 2667 "y.tab.c" /* yacc.c:1646  */
+#line 2690 "y.tab.c" /* yacc.c:1646  */
       default: break;
     }
   /* User semantic actions sometimes alter yychar, and that requires
@@ -2891,7 +2914,7 @@ yyreturn:
 #endif
   return yyresult;
 }
-#line 1126 "compiler_hw3.y" /* yacc.c:1906  */
+#line 1143 "compiler_hw3.y" /* yacc.c:1906  */
 
 
 /* C code section */
@@ -3140,7 +3163,12 @@ static void initial(int index){
         fprintf(file,"iconst_0\n");
     }
     if(strcmp(symbolTable[index].type,"array")==0){
-        fprintf(file,"newarray int\n");        
+        if(strcmp(symbolTable[index].etype,"int32")==0){
+            fprintf(file,"newarray int\n");
+        }
+        if(strcmp(symbolTable[index].etype,"float32")==0){
+            fprintf(file,"newarray float\n");
+        }       
     }
 }
 
