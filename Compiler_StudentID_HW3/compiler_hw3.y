@@ -20,12 +20,10 @@
     static int p_flag=0;
     static int assign_flag=0;
     static int if_id=0;
-    static int for_id=0; 
-    static int arr_flag=0;
+    static int for_id=0;
     static int tag_count=0;
     static int lfalse_count=0;
     static int else_count=0;
-    static int forbegin_count=0;
     static int ifexit_count=0;
     static int fornum=0;
     typedef struct Symbols {
@@ -137,17 +135,12 @@ DeclarationStmt
                             etype="-";
                         }
                         else{//array
-                                           
                             const char* arrcut = "]";
                             char * substr = NULL;
                             substr =strsep(&sepstr, arrcut);
                             char arrtype[8]={};
                             strncpy(arrtype,sepstr,strlen(sepstr)-1);
                             arrtype[strlen(sepstr)]='\0';
-                            //printf("len %d\n",strlen(sepstr));
-                            //printf("type %s\n",sepstr);
-                            //printf("type %s\n",arrtype);
-                            //printf("hoho\n");
                             printf("name %s\n",name);
                             if(strcmp(arrtype,"int32")==0){
                                 dtype="array";
@@ -215,10 +208,6 @@ DeclarationStmt
                                                 char arrtype[8]={};
                                                 strncpy(arrtype,sepstr,strlen(sepstr)-1);
                                                 arrtype[strlen(sepstr)]='\0';
-                                                //printf("len %d\n",strlen(sepstr));
-                                                //printf("type %s\n",sepstr);
-                                                //printf("type %s\n",arrtype);
-                                                //printf("hoho\n");
                                                 if(strcmp(arrtype,"int32")==0){
                                                     dtype="array";
                                                     etype="int32";
@@ -281,7 +270,6 @@ AssignmentStmt
                                             }
 
                                             //printf("id\: %s %s\n",id1,id2);
-                                            
                                             //fprintf(file,"aload %d\n",index);
                                             if(strcmp($2,"ASSIGN")!=0){
                                                 loadID(id1,scopecount);
@@ -655,10 +643,10 @@ Expression4
                                     type2=typecheck(id2);
                                     //printf("%s %s\n",type1,type2);
                                     printf("%s\n","MUL");
-                                    if(strcmp(type1,"int32")==0|strcmp(type2,"int32")==0){
+                                    if(strcmp(type1,"int32")==0||strcmp(type2,"int32")==0){
                                         fprintf(file,"imul\n");
                                     }
-                                    else if(strcmp(type1,"float32")==0|strcmp(type2,"float32")==0){
+                                    else if(strcmp(type1,"float32")==0||strcmp(type2,"float32")==0){
                                         fprintf(file,"fmul\n");
                                     }
 
@@ -821,11 +809,11 @@ Operand
 ;
 
 Literal
-    : INT_LIT   {printf("INT_LIT %d\n",$1);$$="INT_LIT";fprintf(file,"ldc %d\n",yylval);}
-    | FLOAT_LIT     {printf("FLOAT_LIT %6f\n",$1);$$="FLOAT_LIT";fprintf(file,"ldc %f\n",yylval);}
+    : INT_LIT   {printf("INT_LIT %d\n",$1);$$="INT_LIT";fprintf(file,"ldc %d\n",yylval.i_val);}
+    | FLOAT_LIT     {printf("FLOAT_LIT %6f\n",$1);$$="FLOAT_LIT";fprintf(file,"ldc %f\n",yylval.f_val);}
     | TRUE      {printf("TRUE\n"); $$="TRUE";fprintf(file,"%s\n","iconst_1");}
     | FALSE     {printf("FALSE\n");$$="FALSE";fprintf(file,"%s\n","iconst_0");}
-    | STRING_LIT   {printf("STRING_LIT %s\n",$1);$$="STRING_LIT";fprintf(file,"ldc \"%s\"\n",yylval);}
+    | STRING_LIT   {printf("STRING_LIT %s\n",$1);$$="STRING_LIT";fprintf(file,"ldc \"%s\"\n",yylval.s_val);}
 ;
 
 
@@ -1158,6 +1146,7 @@ PrintStmt
                                                 ptype="bool";
                                             }
                                             else if(symbolTable[k].type=="array"){
+                                                printf("12132\n");
                                                 ptype=symbolTable[k].etype;
                                             }
                                             else if(k!=-1){//ID
@@ -1195,7 +1184,7 @@ PrintStmt
                                                 char *sepstr = buff;
                                                 idid=strsep(&sepstr, idcut2);
                                             }
-                                            printf("oaoa1 :%s\n",idid);
+                                            //printf("oaoa1 :%s\n",idid);
                                             //print_symbol(0);
                                             char *d=strstr(buff, " ");
                                             if(d != NULL) {
@@ -1212,6 +1201,7 @@ PrintStmt
                                                 ptype="bool";
                                             }
                                             else if(symbolTable[k].type=="array"){
+                                                //printf("%s\n",symbolTable[k]);
                                                 ptype=symbolTable[k].etype;
                                             }
                                             else if(k!=-1){//ID
