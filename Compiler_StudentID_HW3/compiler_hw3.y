@@ -26,6 +26,8 @@
     static int else_count=0;
     static int ifexit_count=0;
     static int fornum=0;
+    static int numofif=0;
+    static int numoffor=0;
     typedef struct Symbols {
         int index;
         char* name;
@@ -412,14 +414,34 @@ Expression2
                                         if(p_flag==-1){p_flag=1;}
                                         if(f_flag==-1){f_flag=1;}
                                         if(if_flag==-1){if_flag=1;}
+                                        if(strcmp("INT_LIT",$1)==0||strcmp("INT_LIT",$3)==0){
+                                            fprintf(file,"isub\n");
+                                        }
+                                        if(strcmp("FLOAT_LIT",$1)==0||strcmp("FLOAT_LIT",$3)==0){
+                                            fprintf(file,"fcmpl\n");
+                                        }
+                                        int temp_tag=tag_count;
+                                        fprintf(file,"ifne L_cmp_%d\n",temp_tag);//0
+                                        fprintf(file,"iconst_0\n");
+                                        fprintf(file,"goto L_cmp_%d\n",temp_tag+1);//1
+                                        fprintf(file,"L_cmp_%d :\n",temp_tag);//0
+                                        fprintf(file,"iconst_1\n");
+                                        fprintf(file,"L_cmp_%d :\n",temp_tag+1);//1
+                                        tag_count+=2;
                                     }
     | Expression2  LSS Expression3  {   //$$="LSS";
                                         printf("%s\n","LSS");
                                         if(p_flag==-1){p_flag=1;}
                                         if(f_flag==-1){f_flag=1;}
                                         if(if_flag==-1){if_flag=1;}
+                                        if(strcmp("INT_LIT",$1)==0||strcmp("INT_LIT",$3)==0){
+                                            fprintf(file,"isub\n");
+                                        }
+                                        if(strcmp("FLOAT_LIT",$1)==0||strcmp("FLOAT_LIT",$3)==0){
+                                            fprintf(file,"fcmpl\n");
+                                        }
                                         int temp_tag=tag_count;
-                                        fprintf(file,"ifle L_cmp_%d\n",temp_tag);//0
+                                        fprintf(file,"iflt L_cmp_%d\n",temp_tag);//0
                                         fprintf(file,"iconst_0\n");
                                         fprintf(file,"goto L_cmp_%d\n",temp_tag+1);//1
                                         fprintf(file,"L_cmp_%d :\n",temp_tag);//0
@@ -1067,27 +1089,31 @@ ForStmt
     | FORT Condition{
         fprintf(file,"ifeq L_for_exit_%d\n",fornum);
         for_id=0;
+        fornum++;numoffor++;
         } Block{
-            f_flag=0;fprintf(file,"goto L_for_begin_%d\n",fornum);fprintf(file,"L_for_exit_%d :\n",fornum);
+                fornum--;
+                f_flag=0;fprintf(file,"goto L_for_begin_%d\n",fornum);
+                fprintf(file,"L_for_exit_%d :\n",fornum);
             }
 ;
 FORT
     :FOR {
             for_id=1;
             f_flag=-1;
+            fornum=numoffor;
             fprintf(file,"L_for_begin_%d :\n",fornum);
+            
         }
 ;
 ForClause
-    : InitStmt {fornum++;fprintf(file,"L_for_begin_%d :\n",fornum);
+    : InitStmt {fornum++;numoffor++;fprintf(file,"L_for_begin_%d :\n",fornum);
     }SEMICOLON ConditionK SEMICOLON {
         fprintf(file,"post_%d\:\n",fornum);
         } PostStmt{
-            
             fprintf(file,"goto L_for_begin_%d\n",fornum);
             fprintf(file,"pre_%d\:\n",fornum);
             fprintf(file,"ifeq L_for_exit_%d\n",fornum);
-            fornum++;
+            fornum++;numoffor++;
             }
 
 
@@ -1210,7 +1236,7 @@ PrintStmt
                                             else if(strcmp(idid,"FLOAT_LIT")==0){//float_lit
                                                 ptype= "float32";
                                             }
-                                            else if(strcmp(idid,"INT_LIT")==0){//int_lit
+                                            else if(strcmp(idid,"INT_LIT")==0||strcmp(idid,"INT")==0){//int_lit
                                                 ptype= "int32";
                                             }
                                             else{

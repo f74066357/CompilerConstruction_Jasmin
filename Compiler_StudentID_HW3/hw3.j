@@ -13,7 +13,8 @@ istore 0
 L_for_begin_1 :
 iload 0
 ldc 10
-ifle L_cmp_0
+isub
+iflt L_cmp_0
 iconst_0
 goto L_cmp_1
 L_cmp_0 :
@@ -123,7 +124,7 @@ faload
 f2i
 getstatic java/lang/System/out Ljava/io/PrintStream;
 swap
-invokevirtual java/io/PrintStream/println(Ljava/lang/String;)V
+invokevirtual java/io/PrintStream/println(I)V
 ldc 0
 istore 3
 ldc 2
@@ -131,7 +132,7 @@ iload 3
 swap
 iadd
 istore 3
-L_for_begin_0 :
+L_for_begin_2 :
 iload 3
 ldc 0
 isub
@@ -141,7 +142,7 @@ goto L_cmp_7
 L_cmp_6 :
 iconst_1
 L_cmp_7 :
-ifeq L_for_exit_0
+ifeq L_for_exit_2
 iload 3
 getstatic java/lang/System/out Ljava/io/PrintStream;
 swap
@@ -152,6 +153,13 @@ isub
 istore 3
 iload 3
 ldc 0
+isub
+ifne L_cmp_8
+iconst_0
+goto L_cmp_9
+L_cmp_8 :
+iconst_1
+L_cmp_9 :
 ifeq L_exit_1
 ldc 3.140000
 fstore 4
@@ -161,7 +169,7 @@ fadd
 f2i
 getstatic java/lang/System/out Ljava/io/PrintStream;
 swap
-invokevirtual java/io/PrintStream/println(Ljava/lang/String;)V
+invokevirtual java/io/PrintStream/println(I)V
 ldc "If x != "
 getstatic java/lang/System/out Ljava/io/PrintStream;
 swap
@@ -194,30 +202,30 @@ L_exit_2:
 L_exit_0:
 ldc 0
 istore 6
-L_for_begin_0 :
+L_for_begin_3 :
 iload 6
 ldc 1
 istore 6
-L_for_begin_1 :
+L_for_begin_4 :
 iload 6
 ldc 3
 isub
-ifle L_cmp_8
+ifle L_cmp_10
 iconst_0
-goto L_cmp_9
-L_cmp_8 :
+goto L_cmp_11
+L_cmp_10 :
 iconst_1
-L_cmp_9 :
-goto pre_1
-post_1:
+L_cmp_11 :
+goto pre_4
+post_4:
 iload 6
 iload 6
 ldc 1
 iadd
 istore 6
-goto L_for_begin_1
-pre_1:
-ifeq L_for_exit_1
+goto L_for_begin_4
+pre_4:
+ifeq L_for_exit_4
 iload 3
 getstatic java/lang/System/out Ljava/io/PrintStream;
 swap
@@ -244,9 +252,9 @@ ldc "\t"
 getstatic java/lang/System/out Ljava/io/PrintStream;
 swap
 invokevirtual java/io/PrintStream/print(Ljava/lang/String;)V
-goto post_1
-L_for_exit_1 :
-goto L_for_begin_0
-L_for_exit_0 :
+goto post_4
+L_for_exit_4 :
+goto L_for_begin_2
+L_for_exit_2 :
    return
 .end method
