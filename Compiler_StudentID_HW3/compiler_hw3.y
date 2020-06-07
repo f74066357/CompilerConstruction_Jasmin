@@ -27,6 +27,7 @@
     static int else_count=0;
     static int forbegin_count=0;
     static int ifexit_count=0;
+    static int fornum=0;
     typedef struct Symbols {
         int index;
         char* name;
@@ -84,7 +85,7 @@
 %token <s_val> ADD SUB MUL QUO REM GTR LSS GEQ LEQ EQL NEQ LAND LOR
 /* Nonterminal with return, which need to sepcify type */
 %type  <s_val> Type TypeName ArrayType Literal
-%type  <s_val> assign_op FORT IFT Condition PrimaryExpr ForStmt  UnaryExpr Operand
+%type  <s_val> assign_op FORT IFT Condition PrimaryExpr ForStmt  UnaryExpr Operand InitStmt
 %type  <s_val> Expression Expression1 Expression2 Expression3 Expression4
 /* Yacc will start at this nonterminal */
 %start Program
@@ -138,7 +139,7 @@ DeclarationStmt
                         else{//array
                                            
                             const char* arrcut = "]";
-                            char *substr = NULL;
+                            char * substr = NULL;
                             substr =strsep(&sepstr, arrcut);
                             char arrtype[8]={};
                             strncpy(arrtype,sepstr,strlen(sepstr)-1);
@@ -260,6 +261,7 @@ AssignmentStmt
                                             char *sepstr = buff;
                                             char * name=strsep(&sepstr, delim);
                                             id1=name;
+                                            //printf("ssss%s\n",id1);
                                             char temp[10]={};
                                             char temp2[10]={};
                                             strncpy(temp2,$3,strlen($3));
@@ -428,6 +430,14 @@ Expression2
                                         if(p_flag==-1){p_flag=1;}
                                         if(f_flag==-1){f_flag=1;}
                                         if(if_flag==-1){if_flag=1;}
+                                        int temp_tag=tag_count;
+                                        fprintf(file,"ifle L_cmp_%d\n",temp_tag);//0
+                                        fprintf(file,"iconst_0\n");
+                                        fprintf(file,"goto L_cmp_%d\n",temp_tag+1);//1
+                                        fprintf(file,"L_cmp_%d :\n",temp_tag);//0
+                                        fprintf(file,"iconst_1\n");
+                                        fprintf(file,"L_cmp_%d :\n",temp_tag+1);//1
+                                        tag_count+=2;
                                     }
     | Expression2  LEQ Expression3  {   //$$="LEQ";
                                         printf("%s\n","LEQ");
@@ -593,14 +603,31 @@ Expression3
 ;
 Expression4
     : Expression4 MUL UnaryExpr   {//$$="MUL";
+                                    //("QQQQ%s\n",$1);
+                                    ///printf("QQQQ%s\n",$3);
                                     char* id1=NULL;
                                     char* id2=NULL;
                                     char* type1=NULL;
                                     char* type2=NULL;
                                     char *c=strstr($1," ");
                                     if(c == NULL) {
-                                        id1=$1;
-                                        id2=$3;
+                                        char *d=strstr($1,")");
+                                        if(d == NULL) {
+                                            id1=$1;
+                                            id2=$3;
+                                        }
+                                        else{
+                                            char * buff=strdup($1);
+                                            const char* delim = "*";
+                                            char *sepstr = buff;
+                                            char * name=strsep(&sepstr, delim);
+                                            id1=name;
+                                            char * buff2=strdup($3);
+                                            const char* delim2 = ")";
+                                            char *sepstr2 = buff2;
+                                            char * name2=strsep(&sepstr2, delim2);
+                                            id2=name2;
+                                        }
                                     }
                                     else{
                                         char * buff=strdup($1);
@@ -614,14 +641,19 @@ Expression4
                                         if(strcmp(temp2,"INT_LIT")==0){
                                             id2=temp2;
                                         }
+                                        else if(strcmp(temp2,"FLOAT_LIT")==0){
+                                            id2=temp2;
+                                        }
                                         else{
                                             strncpy(temp,$3,strlen($3)-1);
                                             id2=temp;
                                         }
                                     }
                                     //printf("%s %s\n",id1,id2);
+
                                     type1=typecheck(id1);
                                     type2=typecheck(id2);
+                                    //printf("%s %s\n",type1,type2);
                                     printf("%s\n","MUL");
                                     if(strcmp(type1,"int32")==0|strcmp(type2,"int32")==0){
                                         fprintf(file,"imul\n");
@@ -764,6 +796,7 @@ Operand
                     //array load
                     if(assign_flag==1){
                         loadID($1,scopecount);
+                        //printf("%s\n","1515");
                     }
                     else if(p_flag==-1){loadID($1,scopecount);}
                     else if(if_id==1){loadID($1,scopecount);}
@@ -910,25 +943,25 @@ RBRACE1
 ;
 
 IfStmt
-    : IFT ConditionT Block  {
+    : IF1 ConditionT Block  {
                                 if_flag=0;
                                 fprintf(file,"L_if_exit%d\:\n",ifexit_count);
                                 ifexit_count++;
                             }
-    | IFT ConditionT Block ElseStmt{
+    | IF1 ConditionT Block ElseStmt{
                                 //fprintf(file,"%s\n","AAA");
                                 //fprintf(file,"L_if_false_%d\:\n",lfalse_count);
 
                             }
 ;
 
-IFT
+IF1
     :IF {
+            
             if_flag=-1;
             if_id=1;
         }
 ;
-
 ElseStmt
     :ELSE1 IfStmt   {
                         if_flag=0;
@@ -942,17 +975,19 @@ ElseStmt
 ;
 ELSE1    
     :ELSE   {
-                else_count=1;
+
+                //printf("%s\n","else");
+                //else_count=1;
                 //else_count++;
                 //fprintf(file,"%d\n",else_count);
-                //fprintf(file,"L_if_false_%d\:\n",lfalse_count);
+                fprintf(file,"L_if_false_%d\:\n",lfalse_count);
+                lfalse_count++;
                 //lfalse_count+=1;
             }
 ;
 ConditionT
     :Condition  {
-                    fprintf(file,"ifeq L_if_exit%d\n",ifexit_count);
-                    
+                    //fprintf(file,"ifeq L_if_exit%d\n",ifexit_count);
                     if_id=0;
                 }
 ;
@@ -1015,21 +1050,45 @@ Condition
                         }
                     }
 ;
-
 ForStmt
-    : FORT ForClause Block 
-    | FORT Condition{fprintf(file,"ifeq L_for_exit\n");} Block{f_flag=0;fprintf(file,"goto L_for_begin\n");fprintf(file,"L_for_exit :\n");}
+    : FORT ForClause {for_id=0;}Block {
+                                fornum--;
+                                fprintf(file,"goto post_%d\n",fornum);
+                                fprintf(file,"L_for_exit_%d :\n",fornum);
+                                fornum--;
+                            }
+    | FORT Condition{
+        fprintf(file,"ifeq L_for_exit_%d\n",fornum);
+        for_id=0;
+        } Block{
+            f_flag=0;fprintf(file,"goto L_for_begin_%d\n",fornum);fprintf(file,"L_for_exit_%d :\n",fornum);
+            }
 ;
 FORT
     :FOR {
             for_id=1;
-            f_flag=-1;fprintf(file,"L_for_begin :\n");
+            f_flag=-1;
+            fprintf(file,"L_for_begin_%d :\n",fornum);
         }
 ;
 ForClause
-    : InitStmt SEMICOLON Condition SEMICOLON PostStmt
-;
+    : InitStmt {fornum++;fprintf(file,"L_for_begin_%d :\n",fornum);
+    }SEMICOLON ConditionK SEMICOLON {
+        fprintf(file,"post_%d\:\n",fornum);
+        } PostStmt{
+            
+            fprintf(file,"goto L_for_begin_%d\n",fornum);
+            fprintf(file,"pre_%d\:\n",fornum);
+            fprintf(file,"ifeq L_for_exit_%d\n",fornum);
+            fornum++;
+            }
 
+
+ConditionK
+    :Condition{
+        fprintf(file,"goto pre_%d\n",fornum);
+    }
+;
 InitStmt
     : SimpleStmt
 ;
@@ -1040,14 +1099,17 @@ PostStmt
 
 PrintStmt
     : PRINT {p_flag=-1;} LPAREN Expression RPAREN    {
+                                            //printf("%s\n",$4);
                                             char * buff=strdup($4);
                                             char * idid;
                                             
                                             char *c=strstr(buff, "[");
                                             if(c == NULL) {
+                                                
                                                 const char* idcut1 = ")";
                                                 char *sepstr = buff;
                                                 idid=strsep(&sepstr, idcut1);
+
                                             }
                                             else{
                                                 const char* idcut2 = "[";
@@ -1063,7 +1125,15 @@ PrintStmt
                                                 idid=strsep(&sepstr, idcut);
                                             }
                                             //printf("oaoa : %s\n",idid);
+                                            char *m=strstr(buff, "*");
+                                            if(m != NULL) {
+                                                const char* idcut = "*";
+                                                char *sepstr = idid;
+                                                idid=strsep(&sepstr, idcut);
+                                            }
+                                            //printf("oaoa : %s\n",idid);
                                             int k=lookup_symbol(idid,scopecount);
+                                            
                                             char* ptype=NULL;
                                             if(p_flag==1){
                                                 ptype="bool";
