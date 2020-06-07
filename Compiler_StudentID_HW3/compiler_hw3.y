@@ -869,11 +869,29 @@ ConversionExpr
                                                 convo="F";
                                             } 
                                             else{
+                                                
                                                 char * buff=strdup($3);
                                                 char * idid;
-                                                const char* idcut = ")";
-                                                char *sepstr = buff;
-                                                idid=strsep(&sepstr, idcut);
+                                                char * c=strstr(buff,"[");
+                                                char * d=strstr(buff," ");
+                                                if(c!=NULL){
+                                                    const char* idcut = "[";
+                                                    char *sepstr = buff;
+                                                    idid=strsep(&sepstr, idcut);
+
+                                                }
+                                                else if(d!=NULL){
+                                                    const char* idcut = " ";
+                                                    char *sepstr = buff;
+                                                    idid=strsep(&sepstr, idcut);
+                                                }
+                                                else{
+                                                    const char* idcut = ")";
+                                                    char *sepstr = buff;
+                                                    idid=strsep(&sepstr, idcut);
+
+                                                }
+
                                                 int k=lookup_symbol(idid,scopecount);
                                                 char* ptype=NULL;
                                                 ptype=symbolTable[k].type;
@@ -943,51 +961,52 @@ RBRACE1
 ;
 
 IfStmt
-    : IF1 ConditionT Block  {
+    : IFT ConditionT Block  {
                                 if_flag=0;
-                                fprintf(file,"L_if_exit%d\:\n",ifexit_count);
-                                ifexit_count++;
+                                if(else_count==0){
+                                    fprintf(file,"L_exit_%d\:\n",ifexit_count);
+                                }
+                                
                             }
-    | IF1 ConditionT Block ElseStmt{
-                                //fprintf(file,"%s\n","AAA");
-                                //fprintf(file,"L_if_false_%d\:\n",lfalse_count);
-
+    | IFT ConditionT Block { 
+        ifexit_count++;
+        fprintf(file,"goto L_exit_%d\n",ifexit_count);
+        }ElseStmt{
+                                fprintf(file,"L_exit_%d\:\n",ifexit_count);
+                                ifexit_count-=2;
                             }
 ;
 
-IF1
+IFT
     :IF {
-            
             if_flag=-1;
             if_id=1;
+            ifexit_count++;
         }
 ;
 ElseStmt
     :ELSE1 IfStmt   {
                         if_flag=0;
-                        //fprintf(file,"%s\n","XXX");
                     }
     |ELSE1 Block    {   
+                        
                         if_flag=0;
-                        //fprintf(file,"LLL\:\n");
-                        fprintf(file,"L_if_exit%d\:\n",ifexit_count);
+                        fprintf(file,"L_exit_%d\:\n",ifexit_count);
+                        ifexit_count-=2;
                     }
 ;
 ELSE1    
     :ELSE   {
-
-                //printf("%s\n","else");
-                //else_count=1;
-                //else_count++;
-                //fprintf(file,"%d\n",else_count);
-                fprintf(file,"L_if_false_%d\:\n",lfalse_count);
-                lfalse_count++;
-                //lfalse_count+=1;
+                else_count++;
+                int t=ifexit_count;
+                fprintf(file,"L_exit_%d\:\n",t-1);
             }
 ;
 ConditionT
     :Condition  {
-                    //fprintf(file,"ifeq L_if_exit%d\n",ifexit_count);
+                    //fprintf(file,"ifeq L_false_%d\n",ifexit_count);
+                     fprintf(file,"ifeq L_exit_%d\n",ifexit_count);
+                    
                     if_id=0;
                 }
 ;
@@ -1158,6 +1177,9 @@ PrintStmt
                                             p_flag=0;
                                         }
     | PRINTLN{p_flag=-1;} LPAREN Expression RPAREN  {
+
+                                            //printf("111%s\n",$1);
+                                            //printf("333%s\n",$3);
                                             //printf("oaoa :%s\n",$4);
                                             char * buff=strdup($4);
                                             char * idid;
@@ -1173,7 +1195,7 @@ PrintStmt
                                                 char *sepstr = buff;
                                                 idid=strsep(&sepstr, idcut2);
                                             }
-                                            //printf("oaoa1 :%s\n",idid);
+                                            printf("oaoa1 :%s\n",idid);
                                             //print_symbol(0);
                                             char *d=strstr(buff, " ");
                                             if(d != NULL) {
