@@ -173,7 +173,7 @@ DeclarationStmt
                         else{
                             int i=lookup_symbol(name,scopecount);
                             int p=symbolTable[i].lineno;
-                            printf("error\:%d\: %s redeclared in this block. previous declaration at line %d\n",yylineno,name,p);
+                            printf("error:%d: %s redeclared in this block. previous declaration at line %d\n",yylineno,name,p);
                             HAS_ERROR = TRUE;
                         }
                         
@@ -267,10 +267,10 @@ AssignmentStmt
                                                 const char* idcut = "[";
                                                 char *sepstr = id1;
                                                 id1=strsep(&sepstr, idcut);
-                                                //printf("id\: %s\n",id1);
+                                                //printf("id: %s\n",id1);
                                             }
 
-                                            //printf("id\: %s %s\n",id1,id2);
+                                            //printf("id: %s %s\n",id1,id2);
                                             //fprintf(file,"aload %d\n",index);
                                             if(strcmp($2,"ASSIGN")!=0){
                                                 loadID(id1,scopecount);
@@ -294,12 +294,12 @@ AssignmentStmt
                                             }
                                             if(strcmp(id1,"INT_LIT")==0){
                                                 type1="int32";
-                                                printf("error\:%d\: cannot assign to %s\n",yylineno,"int32");
+                                                printf("error:%d: cannot assign to %s\n",yylineno,"int32");
                                                 HAS_ERROR = TRUE;
                                             }
                                             else if(strcmp(id1,"FLOAT_LIT")==0){
                                                 type1="float32";
-                                                printf("error\:%d\: cannot assign to %s\n",yylineno,"float32");
+                                                printf("error:%d: cannot assign to %s\n",yylineno,"float32");
                                                 HAS_ERROR = TRUE;
                                             }
                                             else{
@@ -316,7 +316,7 @@ AssignmentStmt
                                             //printf("type : %s %s\n",type1,type2);
                                             if(strcmp(type1,type2)!=0){
                                                 if(strcmp(type1," ")!=0 && strcmp(type2," ")!=0){
-                                                    printf("error\:%d\: invalid operation\: %s (mismatched types %s and %s)\n",yylineno,$2,type1,type2);
+                                                    printf("error:%d: invalid operation: %s (mismatched types %s and %s)\n",yylineno,$2,type1,type2);
                                                     HAS_ERROR = TRUE;
                                                 }
                                             }
@@ -361,7 +361,7 @@ Expression
                                         //printf("third %s\n",$3);
                                         if(strcmp($1,"INT_LIT")==0||strcmp($3,"INT_LIT")==0){
                                             if(strcmp($3,"TRUE")!=0&&strcmp($3,"FALSE")!=0){
-                                                printf("error\:%d\: invalid operation\: (operator LOR not defined on int32)\n",yylineno);
+                                                printf("error:%d: invalid operation: (operator LOR not defined on int32)\n",yylineno);
                                                 HAS_ERROR = TRUE;
                                             }
                                             
@@ -375,7 +375,7 @@ Expression
 Expression1
     : Expression1 LAND Expression2  {
                                         if(strcmp($1,"INT_LIT")==0||strcmp($3,"INT_LIT")==0){
-                                            printf("error\:%d\: invalid operation\: (operator LAND not defined on int32)\n",yylineno);
+                                            printf("error:%d: invalid operation: (operator LAND not defined on int32)\n",yylineno);
                                             HAS_ERROR = TRUE;
                                         }
                                         //$$="LAND";
@@ -541,7 +541,7 @@ Expression3
                                         //printf("%s %s\n",type1,type2);
                                         if(strcmp(type1,type2)!=0){
                                             if(strcmp(type1," ")!=0 && strcmp(type2," ")!=0){
-                                                printf("error\:%d\: invalid operation\: %s (mismatched types %s and %s)\n",yylineno,"ADD",type1,type2);
+                                                printf("error:%d: invalid operation: %s (mismatched types %s and %s)\n",yylineno,"ADD",type1,type2);
                                                 HAS_ERROR = TRUE;
                                             }
                                         }
@@ -594,7 +594,7 @@ Expression3
                                         //printf("%s %s\n",type1,type2);
                                         if(strcmp(type1,type2)!=0){
                                             if(strcmp(type1," ")!=0 && strcmp(type2," ")!=0){
-                                                printf("error\:%d\: invalid operation\: %s (mismatched types %s and %s)\n",yylineno,"SUB",type1,type2);
+                                                printf("error:%d: invalid operation: %s (mismatched types %s and %s)\n",yylineno,"SUB",type1,type2);
                                                 HAS_ERROR = TRUE;
                                             }
                                         }
@@ -750,7 +750,7 @@ Expression4
                                     type2=typecheck(id2);
                                     //printf("%s %s\n",type1,type2);
                                     if(strcmp(type1,"float32")==0||strcmp(type2,"float32")==0){
-                                        printf("error\:%d\: invalid operation\: (operator REM not defined on float32)\n",yylineno);
+                                        printf("error:%d: invalid operation: (operator REM not defined on float32)\n",yylineno);
                                         HAS_ERROR = TRUE;
                                     }
                                     printf("%s\n","REM");
@@ -816,7 +816,7 @@ Operand
                     }
                 }
                 else{
-                    printf("error\:%d\: undefined\: %s\n",yylineno+1,nameforlook);
+                    printf("error:%d: undefined: %s\n",yylineno+1,nameforlook);
                     HAS_ERROR = TRUE;
                 }
                 $$=$1;
@@ -917,7 +917,7 @@ ConversionExpr
 IncDecStmt
     : Expression INC    {
                             printf("%s\n","INC");
-                            //printf("inc\: %s\n",$1);
+                            //printf("inc: %s\n",$1);
                             const char* idcut = "+";
                             char *sepstr = strdup($1);
                             char *idid=strsep(&sepstr, idcut);
@@ -967,14 +967,17 @@ LBRACE1
     :LBRACE {scopecount++;}
 ;
 RBRACE1
-    :RBRACE {dump_symbol(scopecount);scopecount--;}
+    :RBRACE {
+                dump_symbol(scopecount);
+                scopecount--;
+            }
 ;
 
 IfStmt
     : IFT ConditionT Block  {
                                 if_flag=0;
                                 if(else_count==0){
-                                    fprintf(file,"L_exit_%d\:\n",ifexit_count);
+                                    fprintf(file,"L_exit_%d:\n",ifexit_count);
                                 }
                                 
                             }
@@ -982,7 +985,7 @@ IfStmt
         ifexit_count++;
         fprintf(file,"goto L_exit_%d\n",ifexit_count);
         }ElseStmt{
-                                fprintf(file,"L_exit_%d\:\n",ifexit_count);
+                                fprintf(file,"L_exit_%d:\n",ifexit_count);
                                 ifexit_count-=2;
                             }
 ;
@@ -1001,7 +1004,7 @@ ElseStmt
     |ELSE1 Block    {   
                         
                         if_flag=0;
-                        fprintf(file,"L_exit_%d\:\n",ifexit_count);
+                        fprintf(file,"L_exit_%d:\n",ifexit_count);
                         ifexit_count-=2;
                     }
 ;
@@ -1009,7 +1012,7 @@ ELSE1
     :ELSE   {
                 else_count++;
                 int t=ifexit_count;
-                fprintf(file,"L_exit_%d\:\n",t-1);
+                fprintf(file,"L_exit_%d:\n",t-1);
             }
 ;
 ConditionT
@@ -1025,11 +1028,11 @@ Condition
                         
                         if(if_flag==-1){
                             if(strcmp($1,"INT_LIT")==0){
-                                printf("error\:%d\: non-bool (type int32) used as for condition\n",yylineno+1);
+                                printf("error:%d: non-bool (type int32) used as for condition\n",yylineno+1);
                                 HAS_ERROR=TRUE;
                             }
                             else if(strcmp($1,"FLOAT_LIT")==0){
-                                printf("error\:%d\: non-bool (type float32) used as for condition\n",yylineno+1);
+                                printf("error:%d: non-bool (type float32) used as for condition\n",yylineno+1);
                                 HAS_ERROR=TRUE;
                             }
                             else{
@@ -1041,22 +1044,22 @@ Condition
                                 int i=lookup_symbol(name,scopecount);
                                 type=symbolTable[i].type;
                                 if(strcmp(type,"int32")==0){
-                                    printf("error\:%d\: non-bool (type int32) used as for condition\n",yylineno+1);
+                                    printf("error:%d: non-bool (type int32) used as for condition\n",yylineno+1);
                                     HAS_ERROR=TRUE;
                                 }
                                 else if(strcmp(type,"float32")==0){
-                                    printf("error\:%d\: non-bool (type float32) used as for condition\n",yylineno+1);
+                                    printf("error:%d: non-bool (type float32) used as for condition\n",yylineno+1);
                                     HAS_ERROR=TRUE;
                                 }
                             }
                         }
                         if(f_flag==-1){
                             if(strcmp($1,"INT_LIT")==0){
-                                printf("error\:%d\: non-bool (type int32) used as for condition\n",yylineno+1);
+                                printf("error:%d: non-bool (type int32) used as for condition\n",yylineno+1);
                                 HAS_ERROR=TRUE;
                             }
                             else if(strcmp($1,"FLOAT_LIT")==0){
-                                printf("error\:%d\: non-bool (type float32) used as for condition\n",yylineno+1);
+                                printf("error:%d: non-bool (type float32) used as for condition\n",yylineno+1);
                                 HAS_ERROR=TRUE;
                             }
                             else{
@@ -1068,11 +1071,11 @@ Condition
                                 int i=lookup_symbol(name,scopecount);
                                 type=symbolTable[i].type;
                                 if(strcmp(type,"int32")==0){
-                                    printf("error\:%d\: non-bool (type int32) used as for condition\n",yylineno+1);
+                                    printf("error:%d: non-bool (type int32) used as for condition\n",yylineno+1);
                                     HAS_ERROR=TRUE;
                                 }
                                 else if(strcmp(type,"float32")==0){
-                                    printf("error\:%d\: non-bool (type float32) used as for condition\n",yylineno+1);
+                                    printf("error:%d: non-bool (type float32) used as for condition\n",yylineno+1);
                                     HAS_ERROR=TRUE;
                                 }
                             }
@@ -1109,10 +1112,10 @@ FORT
 ForClause
     : InitStmt {fornum++;numoffor++;fprintf(file,"L_for_begin_%d :\n",fornum);
     }SEMICOLON ConditionK SEMICOLON {
-        fprintf(file,"post_%d\:\n",fornum);
+        fprintf(file,"post_%d:\n",fornum);
         } PostStmt{
             fprintf(file,"goto L_for_begin_%d\n",fornum);
-            fprintf(file,"pre_%d\:\n",fornum);
+            fprintf(file,"pre_%d:\n",fornum);
             fprintf(file,"ifeq L_for_exit_%d\n",fornum);
             fornum++;numoffor++;
             }
