@@ -85,6 +85,7 @@
 %token <s_val> ADD SUB MUL QUO REM GTR LSS GEQ LEQ EQL NEQ LAND LOR
 /* Nonterminal with return, which need to sepcify type */
 %type  <s_val> Type TypeName ArrayType Literal
+%type  <s_val> ConversionExpr  SimpleStmt IndexExpr AssignmentStmt ExpressionStmt IncDecStmt
 %type  <s_val> assign_op FORT IFT Condition PrimaryExpr ForStmt  UnaryExpr Operand InitStmt
 %type  <s_val> Expression Expression1 Expression2 Expression3 Expression4
 /* Yacc will start at this nonterminal */
@@ -138,8 +139,7 @@ DeclarationStmt
                         }
                         else{//array
                             const char* arrcut = "]";
-                            char * substr = NULL;
-                            substr =strsep(&sepstr, arrcut);
+                            char * substr = strsep(&sepstr, arrcut);
                             char arrtype[8]={};
                             strncpy(arrtype,sepstr,strlen(sepstr)-1);
                             arrtype[strlen(sepstr)]='\0';
@@ -179,7 +179,7 @@ DeclarationStmt
                         
                     }
     | VAR ID Type ASSIGN Expression     {
-                                            //int idaddress=lookup_symbol($2,)
+                                            //int idaddress=lookup_symbol($2,scopecount);
                                             //loadID(idaddress);
                                             char * buff=strdup($2);
                                             const char* delim = " ";
@@ -205,8 +205,7 @@ DeclarationStmt
                                             }
                                             else{
                                                 const char* arrcut = "]";
-                                                char *substr = NULL;
-                                                substr =strsep(&sepstr, arrcut);
+                                                char *substr = strsep(&sepstr, arrcut);
                                                 char arrtype[8]={};
                                                 strncpy(arrtype,sepstr,strlen(sepstr)-1);
                                                 arrtype[strlen(sepstr)]='\0';
@@ -354,7 +353,7 @@ TypeName
 ;
 
 ArrayType
-    : LBRACK Expression RBRACK Type
+    : LBRACK Expression RBRACK Type {$$=$2;}
 ;
 Expression
     : Expression LOR Expression1    {
@@ -803,7 +802,6 @@ Operand
                 int idaddress=lookup_symbol(nameforlook,scopecount);
                 if(idaddress!=-1){
                     printf("IDENT (name=%s, address=%d)\n",$1,idaddress);
-                    //array load
                     if(assign_flag==1){
                         loadID($1,scopecount);
                         //printf("%s\n","1515");
@@ -814,7 +812,6 @@ Operand
                     else{
                         if(strcmp(symbolTable[idaddress].type,"array")==0){
                             fprintf(file,"aload %d\n",idaddress);
-                            //fprintf(file,"swap\n");
                         }
                     }
                 }
@@ -914,7 +911,6 @@ ConversionExpr
                                             }
                                             
                                             printf("%s to %s\n",convo,conv);
-
                                         }
 ;
 
@@ -925,7 +921,9 @@ IncDecStmt
                             const char* idcut = "+";
                             char *sepstr = strdup($1);
                             char *idid=strsep(&sepstr, idcut);
-                            loadID(idid,scopecount);
+                            if(for_id!=1){
+                                loadID(idid,scopecount);
+                            }
                             int index=lookup_symbol(idid,scopecount);
                             char *type=symbolTable[index].type;
                             if(strcmp(type,"int32")==0){
@@ -944,7 +942,9 @@ IncDecStmt
                             const char* idcut = "-";
                             char *sepstr = strdup($1);
                             char *idid=strsep(&sepstr, idcut);
-                            loadID(idid,scopecount);
+                            if(for_id!=1){
+                                loadID(idid,scopecount);
+                            }
                             int index=lookup_symbol(idid,scopecount);
                             char *type=symbolTable[index].type;
                             if(strcmp(type,"int32")==0){
@@ -1105,6 +1105,7 @@ FORT
             
         }
 ;
+
 ForClause
     : InitStmt {fornum++;numoffor++;fprintf(file,"L_for_begin_%d :\n",fornum);
     }SEMICOLON ConditionK SEMICOLON {
@@ -1171,17 +1172,19 @@ PrintStmt
                                             if(p_flag==1){
                                                 ptype="bool";
                                             }
-                                            else if(symbolTable[k].type=="array"){
-                                                printf("12132\n");
-                                                ptype=symbolTable[k].etype;
-                                            }
                                             else if(k!=-1){//ID
-                                                ptype=symbolTable[k].type;
+                                                if(strcmp(symbolTable[k].type,"array")==0){
+                                                    ptype=symbolTable[k].etype;
+                                                    //printf("%s\n",symbolTable[k]);
+                                                }
+                                                else{
+                                                    ptype=symbolTable[k].type;
+                                                }
                                             }
                                             else if(strcmp(idid,"FLOAT_LIT")==0){//float_lit
                                                 ptype= "float32";
                                             }
-                                            else if(strcmp(idid,"INT_LIT")==0){//int_lit
+                                            else if(strcmp(idid,"INT_LIT")==0||strcmp(idid,"INT")==0){//int_lit
                                                 ptype= "int32";
                                             }
                                             else{
@@ -1226,12 +1229,13 @@ PrintStmt
                                             if(p_flag==1){
                                                 ptype="bool";
                                             }
-                                            else if(symbolTable[k].type=="array"){
-                                                //printf("%s\n",symbolTable[k]);
-                                                ptype=symbolTable[k].etype;
-                                            }
                                             else if(k!=-1){//ID
-                                                ptype=symbolTable[k].type;
+                                                if(strcmp(symbolTable[k].type,"array")==0){
+                                                    ptype=symbolTable[k].etype;
+                                                }
+                                                else{
+                                                    ptype=symbolTable[k].type;
+                                                }
                                             }
                                             else if(strcmp(idid,"FLOAT_LIT")==0){//float_lit
                                                 ptype= "float32";

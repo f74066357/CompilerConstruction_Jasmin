@@ -23,7 +23,6 @@ L_cmp_1 :
 goto pre_1
 post_1:
 iload 0
-iload 0
 ldc 1
 iadd
 istore 0
@@ -218,7 +217,6 @@ iconst_1
 L_cmp_11 :
 goto pre_4
 post_4:
-iload 6
 iload 6
 ldc 1
 iadd
