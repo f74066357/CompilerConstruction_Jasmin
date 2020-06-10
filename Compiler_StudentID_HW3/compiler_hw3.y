@@ -139,7 +139,7 @@ DeclarationStmt
                         }
                         else{//array
                             const char* arrcut = "]";
-                            char * substr = strsep(&sepstr, arrcut);
+                            char * substr =strsep(&sepstr, arrcut);
                             char arrtype[8]={};
                             strncpy(arrtype,sepstr,strlen(sepstr)-1);
                             arrtype[strlen(sepstr)]='\0';
@@ -299,7 +299,7 @@ AssignmentStmt
                                             }
                                             else if(strcmp(id1,"FLOAT_LIT")==0){
                                                 type1="float32";
-                                                printf("error:%d: cannot assign to %s\n",yylineno,"float32");
+                                                printf("erro:r:%d: cannot assign to %s\n",yylineno,"float32");
                                                 HAS_ERROR = TRUE;
                                             }
                                             else{
@@ -967,10 +967,7 @@ LBRACE1
     :LBRACE {scopecount++;}
 ;
 RBRACE1
-    :RBRACE {
-                dump_symbol(scopecount);
-                scopecount--;
-            }
+    :RBRACE {dump_symbol(scopecount);scopecount--;}
 ;
 
 IfStmt
