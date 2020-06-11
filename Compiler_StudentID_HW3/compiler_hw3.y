@@ -97,12 +97,10 @@
 Program
     : StatementList
 ;
-
 StatementList
     : StatementList Statement
     | Statement
 ;
-
 Statement
     :DeclarationStmt NEWLINE
     | SimpleStmt NEWLINE
@@ -112,7 +110,6 @@ Statement
     | PrintStmt NEWLINE
     | NEWLINE
 ;
-
 DeclarationStmt
     : VAR ID Type   {   
                         char * buff=strdup($2);
@@ -152,9 +149,7 @@ DeclarationStmt
                                 dtype="array";
                                 etype="float32";
                             }
-
                         }
-                        
                         if(lookup_symbol(name,scopecount)==-1){
                             insert_symbol(indexcount,name,dtype,addresscount,yylineno,etype,scopecount);
                             indexcount++;
@@ -168,7 +163,6 @@ DeclarationStmt
                             else{
                                 store(index);
                             }
-                            
                         }
                         else{
                             int i=lookup_symbol(name,scopecount);
@@ -176,11 +170,9 @@ DeclarationStmt
                             printf("error:%d: %s redeclared in this block. previous declaration at line %d\n",yylineno,name,p);
                             HAS_ERROR = TRUE;
                         }
-                        
                     }
     | VAR ID Type ASSIGN Expression     {
                                             //int idaddress=lookup_symbol($2,scopecount);
-                                            //loadID(idaddress);
                                             char * buff=strdup($2);
                                             const char* delim = " ";
                                             char *sepstr = buff;
@@ -219,12 +211,10 @@ DeclarationStmt
                                                 }
                                                 
                                             }
-                                            
-                                            //if(lookup_symbol(name)==-1){
-                                                insert_symbol(indexcount,name,dtype,addresscount,yylineno,etype,scopecount);
-                                                indexcount++;
-                                                addresscount++;
-                                                //print_symbol(scopecount);
+                                            insert_symbol(indexcount,name,dtype,addresscount,yylineno,etype,scopecount);
+                                            indexcount++;
+                                            addresscount++;
+                                            //print_symbol(scopecount);
                                             int index=lookup_symbol(name,scopecount);
                                             if(strcmp(symbolTable[index].type,"array")==0){
                                                 fprintf(file,"astore %d\n",index);
@@ -234,7 +224,6 @@ DeclarationStmt
                                             }
                                         }
 ;
-
 SimpleStmt 
     : AssignmentStmt
     | ExpressionStmt
@@ -251,7 +240,6 @@ AssignmentStmt
                                             char *sepstr = buff;
                                             char * name=strsep(&sepstr, delim);
                                             id1=name;
-                                            //printf("ssss%s\n",id1);
                                             char temp[10]={};
                                             char temp2[10]={};
                                             strncpy(temp2,$3,strlen($3));
@@ -267,11 +255,8 @@ AssignmentStmt
                                                 const char* idcut = "[";
                                                 char *sepstr = id1;
                                                 id1=strsep(&sepstr, idcut);
-                                                //printf("id: %s\n",id1);
                                             }
-
                                             //printf("id: %s %s\n",id1,id2);
-                                            //fprintf(file,"aload %d\n",index);
                                             if(strcmp($2,"ASSIGN")!=0){
                                                 loadID(id1,scopecount);
                                             }
@@ -285,12 +270,10 @@ AssignmentStmt
                                                 int i2=lookup_symbol(id2,scopecount);
                                                 if(i2!=-1){
                                                     type2=typecheck(id2);
-                                                    //loadID(id2,scopecount);
                                                 }
                                                 else{
                                                     type2=" ";
                                                 }
-                                                
                                             }
                                             if(strcmp(id1,"INT_LIT")==0){
                                                 type1="int32";
@@ -326,32 +309,25 @@ AssignmentStmt
 ;
 assign_op
     : ASSIGN  {$$ = "ASSIGN";assign_flag=1;}  
-    | ADD_ASSIGN    {$$ = "ADD_ASSIGN";assign_flag=1; 
-                    }  
-    | SUB_ASSIGN    {$$ = "SUB_ASSIGN";assign_flag=1;
-    
-                    } 
+    | ADD_ASSIGN    {$$ = "ADD_ASSIGN";assign_flag=1;}  
+    | SUB_ASSIGN    {$$ = "SUB_ASSIGN";assign_flag=1;} 
     | MUL_ASSIGN    {$$ = "MUL_ASSIGN";assign_flag=1;} 
     | QUO_ASSIGN    {$$ = "QUO_ASSIGN";assign_flag=1;}
     | REM_ASSIGN    {$$ = "REM_ASSIGN";assign_flag=1;}  
 ;
-
 ExpressionStmt
     : Expression
 ;
-
 Type
     : TypeName 
     | ArrayType
 ;
-
 TypeName
     : INT {$$ = "INT";}
     | FLOAT {$$ = "FLOAT";}
     | STRING {$$ = "STRING";}
     | BOOL {$$ = "BOOL";}
 ;
-
 ArrayType
     : LBRACK Expression RBRACK Type {$$=$2;}
 ;
@@ -453,7 +429,6 @@ Expression2
                                         if(p_flag==-1){p_flag=1;}
                                         if(f_flag==-1){f_flag=1;}
                                         if(if_flag==-1){if_flag=1;}
-
                                         int temp_tag=tag_count;
                                         if(strcmp("INT_LIT",$1)==0||strcmp("INT_LIT",$3)==0){
                                             fprintf(file,"isub\n");
@@ -475,9 +450,6 @@ Expression2
                                         if(f_flag==-1){f_flag=1;}
                                         if(if_flag==-1){if_flag=1;}
                                         //outputcompare("GTR");
-                                        //printf("1 %s\n",$1);
-                                        //printf("3 %s\n",$3);
-
                                         int temp_tag=tag_count;
                                         if(strcmp("INT_LIT",$1)==0||strcmp("INT_LIT",$3)==0){
                                             fprintf(file,"isub\n");
@@ -498,12 +470,26 @@ Expression2
                                         if(p_flag==-1){p_flag=1;}
                                         if(f_flag==-1){f_flag=1;}
                                         if(if_flag==-1){if_flag=1;}
+                                        int temp_tag=tag_count;
+                                        if(strcmp("INT_LIT",$1)==0||strcmp("INT_LIT",$3)==0){
+                                            fprintf(file,"isub\n");
+                                        }
+                                        if(strcmp("FLOAT_LIT",$1)==0||strcmp("FLOAT_LIT",$3)==0){
+                                            fprintf(file,"fcmpl\n");
+                                        }
+                                        fprintf(file,"ifge L_cmp_%d\n",temp_tag);//0
+                                        fprintf(file,"iconst_0\n");
+                                        fprintf(file,"goto L_cmp_%d\n",temp_tag+1);//1
+                                        fprintf(file,"L_cmp_%d :\n",temp_tag);//0
+                                        fprintf(file,"iconst_1\n");
+                                        fprintf(file,"L_cmp_%d :\n",temp_tag+1);//1
+                                        tag_count+=2;
+
                                     }
     | Expression3 
 ;
 Expression3
     : Expression3 ADD Expression4   {
-        
                                         //$$="ADD";
                                         char* id1=NULL;
                                         char* id2=NULL;
@@ -556,8 +542,6 @@ Expression3
                                     }
     | Expression3 SUB Expression4   {
                                         //printf("111%s\n",$1);
-                                                                               
-
                                         //$$="SUB";
                                         char* id1=NULL;
                                         char* id2=NULL;
@@ -598,8 +582,6 @@ Expression3
                                                 HAS_ERROR = TRUE;
                                             }
                                         }
-
-                                        
                                         printf("%s\n","SUB");
                                         if(strcmp(type1,"int32")==0||strcmp(type2,"int32")==0){
                                             fprintf(file,"isub\n");
@@ -611,7 +593,8 @@ Expression3
     | Expression4
 ;
 Expression4
-    : Expression4 MUL UnaryExpr   {//$$="MUL";
+    : Expression4 MUL UnaryExpr   { 
+                                    //$$="MUL";
                                     //("QQQQ%s\n",$1);
                                     ///printf("QQQQ%s\n",$3);
                                     char* id1=NULL;
@@ -659,7 +642,6 @@ Expression4
                                         }
                                     }
                                     //printf("%s %s\n",id1,id2);
-
                                     type1=typecheck(id1);
                                     type2=typecheck(id2);
                                     //printf("%s %s\n",type1,type2);
@@ -672,7 +654,8 @@ Expression4
                                     }
 
                                 }
-    | Expression4 QUO UnaryExpr   {//$$="QUO";
+    | Expression4 QUO UnaryExpr   {
+                                    //$$="QUO";
                                     char* id1=NULL;
                                     char* id2=NULL;
                                     char* type1=NULL;
@@ -713,7 +696,7 @@ Expression4
                                     else if(strcmp(type1,"float32")==0||strcmp(type2,"float32")==0){
                                         fprintf(file,"fdiv\n");
                                     }
-                                    }
+                                }
     | Expression4 REM UnaryExpr   {
                                     //$$="REM";
                                     char* id1=NULL;
@@ -757,18 +740,16 @@ Expression4
                                     if(strcmp(type1,"int32")==0&&strcmp(type2,"int32")==0){
                                         fprintf(file,"irem\n");
                                     }
-                                  }
+                                }
     | UnaryExpr     
 ;
 UnaryExpr
     : ADD UnaryExpr  {
                         printf("%s\n","POS");
-                        
                         $$=$2;
                         }
     | SUB UnaryExpr  {
                         printf("%s\n","NEG");
-                        //printf("222 %s\n",$2);
                         if(strcmp($2,"INT_LIT")==0){
                              fprintf(file,"ineg\n");
                         }
@@ -782,7 +763,7 @@ UnaryExpr
                         $$=$2;
                         fprintf(file,"iconst_1\n");
                         fprintf(file,"ixor\n");
-                        }
+                    }
     | PrimaryExpr   
 ;
 PrimaryExpr
@@ -834,8 +815,6 @@ Literal
     | FALSE     {printf("FALSE\n");$$="FALSE";fprintf(file,"%s\n","iconst_0");}
     | STRING_LIT   {printf("STRING_LIT %s\n",$1);$$="STRING_LIT";fprintf(file,"ldc \"%s\"\n",yylval.s_val);}
 ;
-
-
 IndexExpr
     : PrimaryExpr LBRACK Expression RBRACK  {
                                                 if(assign_flag==1||p_flag==-1){
@@ -909,11 +888,9 @@ ConversionExpr
                                                     convo="F";
                                                 } 
                                             }
-                                            
                                             printf("%s to %s\n",convo,conv);
                                         }
 ;
-
 IncDecStmt
     : Expression INC    {
                             printf("%s\n","INC");
@@ -956,10 +933,8 @@ IncDecStmt
                                 fprintf(file,"fsub\n");
                             }
                             store(index);
-
                         }
 ;
-
 Block
     : LBRACE1 StatementList RBRACE1  
 ;
@@ -969,7 +944,6 @@ LBRACE1
 RBRACE1
     :RBRACE {dump_symbol(scopecount);scopecount--;}
 ;
-
 IfStmt
     : IFT ConditionT Block  {
                                 if_flag=0;
@@ -982,11 +956,10 @@ IfStmt
         ifexit_count++;
         fprintf(file,"goto L_exit_%d\n",ifexit_count);
         }ElseStmt{
-                                fprintf(file,"L_exit_%d:\n",ifexit_count);
-                                ifexit_count-=2;
-                            }
+                    fprintf(file,"L_exit_%d:\n",ifexit_count);
+                    ifexit_count-=2;
+                }
 ;
-
 IFT
     :IF {
             if_flag=-1;
@@ -995,11 +968,8 @@ IFT
         }
 ;
 ElseStmt
-    :ELSE1 IfStmt   {
-                        if_flag=0;
-                    }
-    |ELSE1 Block    {   
-                        
+    :ELSE1 IfStmt   {if_flag=0;}
+    |ELSE1 Block    {
                         if_flag=0;
                         fprintf(file,"L_exit_%d:\n",ifexit_count);
                         ifexit_count-=2;
@@ -1015,14 +985,12 @@ ELSE1
 ConditionT
     :Condition  {
                     //fprintf(file,"ifeq L_false_%d\n",ifexit_count);
-                     fprintf(file,"ifeq L_exit_%d\n",ifexit_count);
-                    
+                    fprintf(file,"ifeq L_exit_%d\n",ifexit_count);
                     if_id=0;
                 }
 ;
 Condition
     : Expression    {
-                        
                         if(if_flag==-1){
                             if(strcmp($1,"INT_LIT")==0){
                                 printf("error:%d: non-bool (type int32) used as for condition\n",yylineno+1);
@@ -1081,11 +1049,11 @@ Condition
 ;
 ForStmt
     : FORT ForClause {for_id=0;}Block {
-                                fornum--;
-                                fprintf(file,"goto post_%d\n",fornum);
-                                fprintf(file,"L_for_exit_%d :\n",fornum);
-                                fornum--;
-                            }
+                                        fornum--;
+                                        fprintf(file,"goto post_%d\n",fornum);
+                                        fprintf(file,"L_for_exit_%d :\n",fornum);
+                                        fornum--;
+                                    }
     | FORT Condition{
         fprintf(file,"ifeq L_for_exit_%d\n",fornum);
         for_id=0;
@@ -1116,8 +1084,7 @@ ForClause
             fprintf(file,"ifeq L_for_exit_%d\n",fornum);
             fornum++;numoffor++;
             }
-
-
+;
 ConditionK
     :Condition{
         fprintf(file,"goto pre_%d\n",fornum);
@@ -1126,17 +1093,14 @@ ConditionK
 InitStmt
     : SimpleStmt
 ;
-
 PostStmt
     : SimpleStmt
 ;
-
 PrintStmt
     : PRINT {p_flag=-1;} LPAREN Expression RPAREN    {
                                             //printf("%s\n",$4);
                                             char * buff=strdup($4);
                                             char * idid;
-                                            
                                             char *c=strstr(buff, "[");
                                             if(c == NULL) {
                                                 
@@ -1150,7 +1114,6 @@ PrintStmt
                                                 char *sepstr = buff;
                                                 idid=strsep(&sepstr, idcut2);
                                             }
-                                            //printf("oaoa1 :%s\n",idid);
                                             //print_symbol(0);
                                             char *d=strstr(buff, " ");
                                             if(d != NULL) {
@@ -1158,16 +1121,13 @@ PrintStmt
                                                 char *sepstr = idid;
                                                 idid=strsep(&sepstr, idcut);
                                             }
-                                            //printf("oaoa : %s\n",idid);
                                             char *m=strstr(buff, "*");
                                             if(m != NULL) {
                                                 const char* idcut = "*";
                                                 char *sepstr = idid;
                                                 idid=strsep(&sepstr, idcut);
                                             }
-                                            //printf("oaoa : %s\n",idid);
                                             int k=lookup_symbol(idid,scopecount);
-                                            
                                             char* ptype=NULL;
                                             if(p_flag==1){
                                                 ptype="bool";
@@ -1181,7 +1141,7 @@ PrintStmt
                                                     ptype=symbolTable[k].type;
                                                 }
                                             }
-                                            else if(strcmp(idid,"FLOAT_LIT")==0){//float_lit
+                                            else if(strcmp(idid,"FLOAT_LIT")==0||strcmp(idid,"FLOAT")==0){//float_lit
                                                 ptype= "float32";
                                             }
                                             else if(strcmp(idid,"INT_LIT")==0||strcmp(idid,"INT")==0){//int_lit
@@ -1195,13 +1155,9 @@ PrintStmt
                                             p_flag=0;
                                         }
     | PRINTLN{p_flag=-1;} LPAREN Expression RPAREN  {
-
-                                            //printf("111%s\n",$1);
-                                            //printf("333%s\n",$3);
                                             //printf("oaoa :%s\n",$4);
                                             char * buff=strdup($4);
                                             char * idid;
-                                            
                                             char *c=strstr(buff, "[");
                                             if(c == NULL) {
                                                 const char* idcut1 = ")";
@@ -1213,7 +1169,6 @@ PrintStmt
                                                 char *sepstr = buff;
                                                 idid=strsep(&sepstr, idcut2);
                                             }
-                                            //printf("oaoa1 :%s\n",idid);
                                             //print_symbol(0);
                                             char *d=strstr(buff, " ");
                                             if(d != NULL) {
@@ -1221,10 +1176,7 @@ PrintStmt
                                                 char *sepstr = idid;
                                                 idid=strsep(&sepstr, idcut);
                                             }
-                                            //printf("oaoa0 :%s\n",idid);
-
                                             int k=lookup_symbol(idid,scopecount);
-                                            //printf("oaoa12 :%d %d\n",scopecount,k);
                                             char* ptype=NULL;
                                             if(p_flag==1){
                                                 ptype="bool";
@@ -1237,7 +1189,7 @@ PrintStmt
                                                     ptype=symbolTable[k].type;
                                                 }
                                             }
-                                            else if(strcmp(idid,"FLOAT_LIT")==0){//float_lit
+                                            else if(strcmp(idid,"FLOAT_LIT")==0||strcmp(idid,"FLOAT")==0){//float_lit
                                                 ptype= "float32";
                                             }
                                             else if(strcmp(idid,"INT_LIT")==0||strcmp(idid,"INT")==0){//int_lit
@@ -1269,7 +1221,7 @@ int main(int argc, char *argv[])
                     ".class public Main\n"
                     ".super java/lang/Object\n"
                     ".method public static main([Ljava/lang/String;)V\n"
-                    ".limit stack 100\n"
+                    ".limit stack 30\n"
                     ".limit locals 100\n"
             );
     yylineno = 0;
@@ -1288,7 +1240,6 @@ int main(int argc, char *argv[])
     }
     return 0;
 }
-
 static void create_symbol() {
     for(int i=0;i<=9;i++){
         symbolTable[i].index=i;
@@ -1300,7 +1251,6 @@ static void create_symbol() {
         symbolTable[i].scopenum=-1;
     }
 }
-
 static void insert_symbol(int index,char* name,char* type,int address,int lineno,char* etype,int scopenum) {
     symbolTable[index].index=index;
     symbolTable[index].name=name;
@@ -1311,7 +1261,6 @@ static void insert_symbol(int index,char* name,char* type,int address,int lineno
     symbolTable[index].scopenum=scopenum;
     printf("> Insert {%s} into symbol table (scope level: %d)\n", name, scopenum);
 }
-
 static int lookup_symbol(char *name,int scopenum) {
     for(int i=0;i<indexcount;i++){
         if(strcmp(symbolTable[i].name,name)==0&&symbolTable[i].scopenum==scopenum){
@@ -1321,14 +1270,13 @@ static int lookup_symbol(char *name,int scopenum) {
     while(scopenum!=0){
         scopenum--;
         for(int i=0;i<indexcount;i++){
-        if(strcmp(symbolTable[i].name,name)==0&&symbolTable[i].scopenum==scopenum){
-            return symbolTable[i].index;
+            if(strcmp(symbolTable[i].name,name)==0&&symbolTable[i].scopenum==scopenum){
+                return symbolTable[i].index;
+            }
         }
-    }
     }
     return -1;
 }
-
 static void dump_symbol(int scope) {
     printf("> Dump symbol table (scope level: %d)\n", scope);
     printf("%-10s%-10s%-10s%-10s%-10s%s\n",
@@ -1342,11 +1290,8 @@ static void dump_symbol(int scope) {
             k++;
             symbolTable[i].scopenum=-1;
         }
-        
     }
-    
 }
-
 static void print_symbol() {
     printf("> Print\n");
     printf("%-10s%-10s%-10s%-10s%-10s%-10s%-50s\n",
@@ -1357,7 +1302,6 @@ static void print_symbol() {
                 symbolTable[i].address,symbolTable[i].lineno, symbolTable[i].etype,
                 symbolTable[i].scopenum);
     }
-    
 }
 static void loadID(char* id,int scopecount){
     int index=lookup_symbol(id,scopecount);
@@ -1397,9 +1341,7 @@ static void outputbool(int ln){
         fprintf(file,"invokevirtual java/io/PrintStream/print(Ljava/lang/String;)V\n");
     }
 }
-
 static void output(char* type,int ln){
-    
     if(ln==1){
         if(strcmp(type,"bool")==0){
             outputbool(1);
@@ -1457,7 +1399,6 @@ static void store(int index){
         if(strcmp(symbolTable[index].etype,"float32")==0){
             fprintf(file,"fastore\n");
         }
-        
     }
 }
 char * typecheck(char *id){
@@ -1465,7 +1406,7 @@ char * typecheck(char *id){
     if(strcmp(id,"FLOAT_LIT")==0||strcmp(id,"FLOAT")==0){
         type="float32";
     }
-    else if(strcmp(id,"INT_LIT")==0||strcmp(id,"IN")==0){
+    else if(strcmp(id,"INT_LIT")==0||strcmp(id,"INT")==0){
         type="int32";
     }
     else{
@@ -1477,7 +1418,6 @@ char * typecheck(char *id){
             else{
                 type=symbolTable[i].type;
             }
-            
         }
         else{
             type=" ";
@@ -1514,11 +1454,8 @@ static void print_assign(char * type,char * op){
         fprintf(file,"swap\n");
     }
     if(strcmp(type,"float32")==0){
-        
         if(strcmp(op,"ADD_ASSIGN")==0){
-
-            fprintf(file,"fadd\n");
-            
+            fprintf(file,"fadd\n"); 
         }
         if(strcmp(op,"SUB_ASSIGN")==0){
             fprintf(file,"fsub\n");
@@ -1547,5 +1484,4 @@ static void print_assign(char * type,char * op){
             fprintf(file,"irem\n");
         }
     }
-    
 }
